@@ -1,0 +1,125 @@
+// @generated automatically by Diesel CLI.
+
+diesel::table! {
+    brands (id) {
+        id -> Int4,
+        #[max_length = 128]
+        name -> Varchar,
+        #[max_length = 256]
+        url_name -> Varchar,
+        #[max_length = 512]
+        description -> Varchar,
+        published -> Bool,
+    }
+}
+
+diesel::table! {
+    categories (id) {
+        id -> Int4,
+        #[max_length = 32]
+        name -> Varchar,
+        #[max_length = 256]
+        url_name -> Varchar,
+        #[max_length = 256]
+        description -> Varchar,
+        published -> Bool,
+    }
+}
+
+diesel::table! {
+    comments (id) {
+        id -> Int4,
+        #[max_length = 256]
+        text -> Varchar,
+        date -> Nullable<Timestamp>,
+        product_id -> Int4,
+        user_id -> Int4,
+        published -> Bool,
+    }
+}
+
+diesel::table! {
+    feedback_types (id) {
+        id -> Int4,
+        #[max_length = 32]
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
+    feedbacks (id) {
+        id -> Int4,
+        date -> Nullable<Timestamp>,
+        product_id -> Int4,
+        user_id -> Int4,
+        published -> Bool,
+    }
+}
+
+diesel::table! {
+    grades (id) {
+        id -> Int4,
+        feedback_id -> Int4,
+        type_id -> Int4,
+        value -> Int4,
+    }
+}
+
+diesel::table! {
+    products (id) {
+        id -> Int4,
+        #[max_length = 256]
+        name -> Varchar,
+        #[max_length = 512]
+        url_name -> Varchar,
+        description -> Text,
+        #[max_length = 256]
+        image -> Nullable<Varchar>,
+        brand_id -> Nullable<Int4>,
+        category_id -> Nullable<Int4>,
+        published -> Bool,
+    }
+}
+
+diesel::table! {
+    roles (id) {
+        id -> Int4,
+        #[max_length = 16]
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
+    users (id) {
+        id -> Int4,
+        #[max_length = 32]
+        username -> Varchar,
+        #[max_length = 512]
+        password -> Varchar,
+        #[max_length = 64]
+        email -> Varchar,
+        role_id -> Int4,
+        published -> Bool,
+    }
+}
+
+diesel::joinable!(comments -> products (product_id));
+diesel::joinable!(comments -> users (user_id));
+diesel::joinable!(feedbacks -> products (product_id));
+diesel::joinable!(feedbacks -> users (user_id));
+diesel::joinable!(grades -> feedback_types (type_id));
+diesel::joinable!(products -> brands (brand_id));
+diesel::joinable!(products -> categories (category_id));
+diesel::joinable!(users -> roles (role_id));
+
+diesel::allow_tables_to_appear_in_same_query!(
+    brands,
+    categories,
+    comments,
+    feedback_types,
+    feedbacks,
+    grades,
+    products,
+    roles,
+    users,
+);
