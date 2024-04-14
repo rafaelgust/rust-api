@@ -2,10 +2,9 @@
 extern crate rocket;
 extern crate diesel;
 
-mod schema;
-mod models;
-mod db;
+mod utils;
 
+mod schema;
 
 fn main() {
     println!("Hello, world!");
