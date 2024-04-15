@@ -18,7 +18,6 @@ pub struct Comment {
 #[diesel(table_name = crate::schema::comments)]
 pub struct NewComment<'a> {
     pub text: &'a str,
-    pub date: &'a Option<NaiveDateTime>,
     pub product_id: &'a i32,
     pub user_id: &'a i32,
     pub published: bool,

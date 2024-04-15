@@ -21,10 +21,3 @@ pub struct UpdateFeedbackType<'a> {
     pub id: &'a i32,
     pub name: Option<&'a str>,
 }
-
-#[derive(AsChangeset)]
-#[diesel(table_name = crate::schema::feedback_types)]
-pub struct RemoveFeedbackType<'a> {
-    pub id: &'a i32,
-    pub published: &'a bool,
-}

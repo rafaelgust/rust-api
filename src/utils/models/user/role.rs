@@ -22,8 +22,3 @@ pub struct UpdateRole<'a> {
     pub name: Option<&'a str>,
 }
 
-#[derive(AsChangeset)]
-#[diesel(table_name = crate::schema::roles)]
-pub struct RemoveRole<'a> {
-    pub id: &'a i32,
-}

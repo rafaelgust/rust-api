@@ -16,7 +16,7 @@ pub struct Grade {
 pub struct NewGrade<'a> {
     pub feedback_id: &'a i32,
     pub type_id: &'a i32,
-    pub value: bool,
+    pub value: &'a i32,
 }
 
 #[derive(AsChangeset)]
@@ -25,10 +25,4 @@ pub struct UpdateGrade<'a> {
     pub id: &'a i32,
     pub type_id: Option<&'a i32>,
     pub value: Option<&'a i32>,
-}
-
-#[derive(AsChangeset)]
-#[diesel(table_name = crate::schema::grades)]
-pub struct RemoveGrade<'a> {
-    pub id: &'a i32,
 }

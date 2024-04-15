@@ -16,21 +16,14 @@ pub struct Feedback {
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::feedbacks)]
 pub struct NewFeedback<'a> {
-    pub date: &'a Option<NaiveDateTime>,
     pub product_id: &'a i32,
     pub user_id: &'a i32,
-    pub published: bool,
+    pub published: &'a bool,
 }
 
 #[derive(AsChangeset)]
 #[diesel(table_name = crate::schema::feedbacks)]
 pub struct UpdateFeedback<'a> {
     pub id: &'a i32,
-}
-
-#[derive(AsChangeset)]
-#[diesel(table_name = crate::schema::feedbacks)]
-pub struct RemoveFeedback<'a> {
-    pub id: &'a i32,
-    pub published: &'a bool,
+    pub published: Option<&'a bool>,
 }
