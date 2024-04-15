@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use serde::Serialize;
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::brands)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Brand {
@@ -28,11 +28,5 @@ pub struct UpdateBrand<'a> {
     pub name: Option<&'a str>,
     pub url_name: Option<&'a str>,
     pub description: Option<&'a str>,
-}
-
-#[derive(AsChangeset)]
-#[diesel(table_name = crate::schema::brands)]
-pub struct RemoveBrand<'a> {
-    pub id: &'a i32,
-    pub published: &'a bool,
+    pub published: Option<&'a bool>,
 }
