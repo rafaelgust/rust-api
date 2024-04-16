@@ -96,7 +96,8 @@ fn update_brand(brand: UpdateBrandCommand, connection: &mut PgConnection) -> Res
 fn delete_brand(brand: DeleteBrandCommand, connection: &mut PgConnection) -> Result<String, Error> {
     info!("Deleting brand: {:?}", brand);
 
-    let num_deleted = diesel::delete(brands.find(brand.id))
+    let num_deleted = diesel::update(brands.find(brand.id))
+        .set(published.eq(brand.published))
         .execute(connection)?;
 
     match num_deleted {

@@ -40,4 +40,5 @@ pub struct UpdateBrand {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct DeleteBrand {
     pub id: i32,
+    pub published: bool,
 }

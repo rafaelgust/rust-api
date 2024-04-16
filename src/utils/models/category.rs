@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use serde::Serialize;
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::categories)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Category {
@@ -28,11 +28,5 @@ pub struct UpdateCategory<'a> {
     pub name: Option<&'a str>,
     pub url_name: Option<&'a str>,
     pub description: Option<&'a str>,
-}
-
-#[derive(AsChangeset)]
-#[diesel(table_name = crate::schema::categories)]
-pub struct RemoveCategory<'a> {
-    pub id: &'a i32,
-    pub published: &'a bool,
+    pub published: Option<&'a bool>,
 }

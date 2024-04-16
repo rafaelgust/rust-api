@@ -1,8 +1,8 @@
 use clap::{Args, Parser, Subcommand};
 
-use crate::utils::args::sub_commands::brand_commands::BrandSubcommand;
-use crate::utils::args::sub_commands::category_commands::CategorySubcommand;
-use crate::utils::args::sub_commands::comment_commands::CommentSubcommand;
+use super::sub_commands::brand_commands::BrandSubcommand;
+use super::sub_commands::category_commands::CategorySubcommand;
+use super::sub_commands::comment_commands::CommentSubcommand;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]

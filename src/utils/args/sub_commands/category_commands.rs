@@ -40,4 +40,5 @@ pub struct UpdateCategory {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct DeleteCategory {
     pub id: i32,
+    pub published: bool,
 }
