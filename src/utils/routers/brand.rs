@@ -1,9 +1,13 @@
+use rocket::response::{status::Accepted, status::NotFound, status::Created};
 use rocket::http::uri::Origin;
-use rocket::response::{status::Accepted, status::NotFound};
+
 use rocket::serde::json::Json;
+
+use crate::utils::response::ApiResponse;
 
 use crate::utils::models::brand::Brand;
 use crate::utils::ops::brand_ops::{self, BrandResult};
+
 use crate::utils::args::commands::BrandCommand;
 use crate::utils::args::sub_commands::brand_commands::{BrandSubcommand, CreateBrand, DeleteBrand, GetBrand, UpdateBrand as UpdateBrandCommand};
 
@@ -41,23 +45,40 @@ pub fn get_all_brands() -> Result<Json<Vec<Brand>>, NotFound<String>> {
 }
 
 #[post("/", data = "<new_brand>", format = "application/json")]
-pub fn new_brand(new_brand: Json<CreateBrand>) -> Result<Accepted<String>, NotFound<String>> {
-
+pub fn new_brand(new_brand: Json<CreateBrand>) -> Result<Created<String>, NotFound<String>> {
     let brand = CreateBrand {
         name: new_brand.name.trim().to_string(),
         url_name: new_brand.url_name.trim().to_string(),
         description: new_brand.description.trim().to_string(),
-        published: true,
     };
-    
     let result = brand_ops::handle_brand_command(BrandCommand {
         command: BrandSubcommand::Create(brand),
     });
-    
     match result {
-        Ok(BrandResult::Message(_)) => Ok(Accepted(format!("Brand '{}' was created", new_brand.name.trim().to_string()))),
-        Ok(_) => Err(NotFound(format!("Unable to find brand"))),
-        Err(_) => Err(NotFound(format!("An error occurred while fetching brand"))),
+        Ok(BrandResult::Message(_)) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_success_message(format!("Brand '{}' was created", new_brand.name.trim()));
+
+            let json_string = serde_json::to_string(&json_response).unwrap();
+
+            let created_response = Created::new("http://myservice.com/resource.json")
+                .tagged_body(json_string);
+
+            Ok(created_response)
+        },
+        Ok(_) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error("Unexpected result");
+
+            let json_string = serde_json::to_string(&json_response).unwrap();
+
+            Err(NotFound(json_string))
+        },
+        Err(err) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error(format!("'{}'", err.to_string()));
+
+            let json_string = serde_json::to_string(&json_response).unwrap();
+
+            Err(NotFound(json_string))
+        },
     }
 }
 

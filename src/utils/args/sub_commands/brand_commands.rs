@@ -25,7 +25,6 @@ pub struct CreateBrand {
     pub name: String,
     pub url_name: String,
     pub description: String,
-    pub published: bool,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]

@@ -3,6 +3,9 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use log::info;
 
+use diesel::dsl::exists;
+use diesel::select;
+
 use crate::utils::models::brand::{NewBrand, UpdateBrand, Brand};
 use crate::schema::brands::dsl::*;
 
@@ -52,21 +55,30 @@ fn show_brand_by_id(brand: GetBrandCommand, connection: &mut PgConnection) -> Re
 fn create_brand(brand: CreateBrandCommand, connection: &mut PgConnection) -> Result<String, Error> {
     info!("Creating brand: {:?}", brand);
 
+    // Check
+     let exists_url_name: bool = select(exists(brands.filter(url_name.eq(&brand.url_name))))
+        .get_result(connection)
+        .map_err(|err| Error::from(err))?;
+
+    if exists_url_name {
+        return Err(Error::QueryBuilderError("Brand with this URL name already exists".into()));
+    }
+
     let new_brand = NewBrand {
         name: &brand.name,
         url_name: &brand.url_name,
         description: &brand.description,
-        published: &brand.published,
+        published: &true,
     };
 
     let result = diesel::insert_into(brands)
-                    .values(new_brand)
-                    .execute(connection)
-                    .optional();
+                        .values(new_brand)
+                        .execute(connection)
+                        .optional();
 
     match result {
         Ok(brand) => Ok(format!("Creating brand: {:?}", brand)),
-        Err(err) => Err(err),
+        Err(err) => Err(Error::QueryBuilderError(format!("Creating brand error: {:?}",err).into()))
     }
 }
 
