@@ -44,7 +44,7 @@ fn show_brand_by_url_name(brand: GetBrandByUrlNameCommand, connection: &mut PgCo
     info!("Showing brand: {:?}", brand);
     
     let brand_result = brands
-        .filter(url_name.eq(brand.url_name))
+        .filter(url_name.eq(brand.url_name).and(published.eq(true)))
         .select(Brand::as_select())
         .first(connection)
         .optional();
