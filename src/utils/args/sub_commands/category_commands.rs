@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Subcommand)]
 pub enum CategorySubcommand {
-    Show(GetCategory),
+    Show(GetCategoryByUrlName),
 
     Create(CreateCategory),
 
@@ -16,8 +16,8 @@ pub enum CategorySubcommand {
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
-pub struct GetCategory {
-    pub id: i32,
+pub struct GetCategoryByUrlName {
+    pub url_name: String,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
@@ -25,7 +25,6 @@ pub struct CreateCategory {
     pub name: String,
     pub url_name: String,
     pub description: String,
-    pub published: bool,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
@@ -40,5 +39,4 @@ pub struct UpdateCategory {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct DeleteCategory {
     pub id: i32,
-    pub published: bool,
 }
