@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Subcommand)]
 pub enum BrandSubcommand {
-    Show(GetBrand),
+    Show(GetBrandByUrlName),
 
     Create(CreateBrand),
 
@@ -16,8 +16,8 @@ pub enum BrandSubcommand {
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
-pub struct GetBrand {
-    pub id: i32,
+pub struct GetBrandByUrlName {
+    pub url_name: String,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
@@ -39,5 +39,4 @@ pub struct UpdateBrand {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct DeleteBrand {
     pub id: i32,
-    pub published: bool,
 }

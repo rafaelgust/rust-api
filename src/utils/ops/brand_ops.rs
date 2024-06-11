@@ -10,7 +10,7 @@ use crate::utils::models::brand::{NewBrand, UpdateBrand, Brand};
 use crate::schema::brands::dsl::*;
 
 use crate::utils::args::commands::BrandCommand;
-use crate::utils::args::sub_commands::brand_commands::{BrandSubcommand, GetBrand as GetBrandCommand, CreateBrand as CreateBrandCommand, UpdateBrand as UpdateBrandCommand, DeleteBrand as DeleteBrandCommand};
+use crate::utils::args::sub_commands::brand_commands::{BrandSubcommand, GetBrandByUrlName as GetBrandByUrlNameCommand, CreateBrand as CreateBrandCommand, UpdateBrand as UpdateBrandCommand, DeleteBrand as DeleteBrandCommand};
 
 pub enum BrandResult {
     Brand(Option<Brand>),
@@ -23,16 +23,16 @@ pub fn handle_brand_command(brand: BrandCommand) -> Result<BrandResult, Error> {
     let command = brand.command;
     match command {
         BrandSubcommand::Show(brand) => {
-            show_brand_by_id(brand, connection).map(BrandResult::Brand)
+            show_brand_by_url_name(brand, connection).map(BrandResult::Brand)
         }
         BrandSubcommand::Create(brand) => {
             create_brand(brand, connection).map(BrandResult::Message)
         }
         BrandSubcommand::Update(brand) => {
-            update_brand(brand, connection).map(BrandResult::Brand)
+            update_brand_by_id(brand, connection).map(BrandResult::Brand)
         }
         BrandSubcommand::Delete(delete_entity) => {
-            delete_brand(delete_entity, connection).map(BrandResult::Message)
+            delete_brand_by_id(delete_entity, connection).map(BrandResult::Message)
         }
         BrandSubcommand::ShowAll => {
             show_brands(connection).map(BrandResult::Brands)
@@ -40,11 +40,11 @@ pub fn handle_brand_command(brand: BrandCommand) -> Result<BrandResult, Error> {
     }
 }
 
-fn show_brand_by_id(brand: GetBrandCommand, connection: &mut PgConnection) -> Result<Option<Brand>, Error> {
+fn show_brand_by_url_name(brand: GetBrandByUrlNameCommand, connection: &mut PgConnection) -> Result<Option<Brand>, Error> {
     info!("Showing brand: {:?}", brand);
     
     let brand_result = brands
-        .filter(id.eq(brand.id))
+        .filter(url_name.eq(brand.url_name))
         .select(Brand::as_select())
         .first(connection)
         .optional();
@@ -82,7 +82,7 @@ fn create_brand(brand: CreateBrandCommand, connection: &mut PgConnection) -> Res
     }
 }
 
-fn update_brand(brand: UpdateBrandCommand, connection: &mut PgConnection) -> Result<Option<Brand>, Error> {
+fn update_brand_by_id(brand: UpdateBrandCommand, connection: &mut PgConnection) -> Result<Option<Brand>, Error> {
     info!("Updating brand: {:?}", brand);
 
     let update_brand = UpdateBrand {
@@ -105,11 +105,11 @@ fn update_brand(brand: UpdateBrandCommand, connection: &mut PgConnection) -> Res
     }
 }
 
-fn delete_brand(brand: DeleteBrandCommand, connection: &mut PgConnection) -> Result<String, Error> {
+fn delete_brand_by_id(brand: DeleteBrandCommand, connection: &mut PgConnection) -> Result<String, Error> {
     info!("Deleting brand: {:?}", brand);
 
-    let num_deleted = diesel::update(brands.find(brand.id))
-        .set(published.eq(brand.published))
+    let num_deleted = diesel::update(brands.find(brand.id).filter(published.eq(true)))
+        .set(published.eq(false))
         .execute(connection)?;
 
     match num_deleted {
@@ -122,6 +122,8 @@ fn show_brands(connection: &mut PgConnection) -> Result<Vec<Brand>, Error> {
     info!("Displaying all brands");
 
     let result = brands
+        .filter(published.eq(true))
+        .order(id.desc())
         .load::<Brand>(connection);
 
     result
