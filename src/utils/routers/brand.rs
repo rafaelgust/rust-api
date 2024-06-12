@@ -9,7 +9,7 @@ use crate::utils::models::brand::Brand;
 use crate::utils::ops::brand_ops::{self, BrandResult};
 
 use crate::utils::args::commands::BrandCommand;
-use crate::utils::args::sub_commands::brand_commands::{BrandSubcommand, CreateBrand, DeleteBrand, GetBrandByUrlName, UpdateBrand as UpdateBrandCommand};
+use crate::utils::args::sub_commands::brand_commands::{BrandSubcommand, CreateBrand, DeleteBrand, GetBrandByUrlName, UpdateBrand as UpdateBrandCommand, BrandPagination};
 
 use crate::utils::constants::{BRAND_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
 
@@ -35,6 +35,42 @@ pub fn get_all_brands() -> Result<Json<ApiResponse<Vec<Brand>>>, NotFound<String
     
     let result = brand_ops::handle_brand_command(BrandCommand {
         command: BrandSubcommand::ShowAll,
+    });
+
+    match result {
+        Ok(BrandResult::Brands(brand)) => {
+            let json_response: ApiResponse<Vec<Brand>> = ApiResponse::new_success_data(brand);
+            
+            Ok(Json(json_response))
+        },
+        Ok(_) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error(BRAND_NOT_FOUND.to_string());
+
+            let json_string = serde_json::to_string(&json_response).unwrap();
+
+            Err(NotFound(json_string))
+        },
+        Err(_) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error(FETCH_ERROR.to_string());
+
+            let json_string = serde_json::to_string(&json_response).unwrap();
+
+            Err(NotFound(json_string))
+        },
+    }
+}
+
+#[post("/list", data = "<brands>", format = "application/json")]
+pub fn get_brands(brands: Json<BrandPagination>) -> Result<Json<ApiResponse<Vec<Brand>>>, NotFound<String>> {
+    
+    let result = brand_ops::handle_brand_command(BrandCommand {
+        command: BrandSubcommand::Pagination(
+            BrandPagination {
+                limit: brands.limit,
+                last_id: brands.last_id,
+                order_by_desc: brands.order_by_desc,
+            }
+        ),
     });
 
     match result {

@@ -10,7 +10,13 @@ use crate::utils::models::brand::{NewBrand, UpdateBrand, Brand};
 use crate::schema::brands::dsl::*;
 
 use crate::utils::args::commands::BrandCommand;
-use crate::utils::args::sub_commands::brand_commands::{BrandSubcommand, GetBrandByUrlName as GetBrandByUrlNameCommand, CreateBrand as CreateBrandCommand, UpdateBrand as UpdateBrandCommand, DeleteBrand as DeleteBrandCommand};
+use crate::utils::args::sub_commands::brand_commands::{BrandSubcommand, 
+    GetBrandByUrlName as GetBrandByUrlNameCommand, 
+    CreateBrand as CreateBrandCommand, 
+    UpdateBrand as UpdateBrandCommand, 
+    DeleteBrand as DeleteBrandCommand,
+    BrandPagination as BrandPaginationCommand
+};
 
 pub enum BrandResult {
     Brand(Option<Brand>),
@@ -33,6 +39,9 @@ pub fn handle_brand_command(brand: BrandCommand) -> Result<BrandResult, Error> {
         }
         BrandSubcommand::Delete(delete_entity) => {
             delete_brand_by_id(delete_entity, connection).map(BrandResult::Message)
+        }
+        BrandSubcommand::Pagination(pagination) => {
+            brand_pagination(pagination, connection).map(BrandResult::Brands)
         }
         BrandSubcommand::ShowAll => {
             show_brands(connection).map(BrandResult::Brands)
@@ -116,6 +125,36 @@ fn delete_brand_by_id(brand: DeleteBrandCommand, connection: &mut PgConnection) 
         0 => Err(Error::NotFound),
         _ => Ok("Brand deleted".to_string()),
     }
+}
+
+fn brand_pagination(pagination: BrandPaginationCommand, connection: &mut PgConnection) -> Result<Vec<Brand>, diesel::result::Error> {
+    info!("Pagination: {:?}", pagination);
+
+    let limit = pagination.limit.unwrap_or(10);
+    let last_id = pagination.last_id;
+    let order_by_desc = pagination.order_by_desc.unwrap_or(true);
+
+    let mut query = brands
+        .filter(published.eq(true))
+        .into_boxed(); // Converts to a boxed query for conditional appending
+
+    if let Some(last_id_value) = last_id {
+        if order_by_desc {
+            query = query.filter(id.lt(last_id_value));
+        } else {
+            query = query.filter(id.gt(last_id_value));
+        }
+    }
+
+    query = if order_by_desc {
+        query.order(id.desc())
+    } else {
+        query.order(id.asc())
+    };
+
+    query
+        .limit(limit)
+        .load::<Brand>(connection)
 }
 
 fn show_brands(connection: &mut PgConnection) -> Result<Vec<Brand>, Error> {

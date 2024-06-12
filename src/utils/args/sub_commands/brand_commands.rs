@@ -13,6 +13,8 @@ pub enum BrandSubcommand {
     Delete(DeleteBrand),
 
     ShowAll,
+
+    Pagination(BrandPagination),
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
@@ -39,4 +41,11 @@ pub struct UpdateBrand {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct DeleteBrand {
     pub id: i32,
+}
+
+#[derive(Debug, Args, Deserialize, Serialize)]
+pub struct BrandPagination {
+    pub limit: Option<i64>, 
+    pub last_id: Option<i32>, 
+    pub order_by_desc: Option<bool>
 }

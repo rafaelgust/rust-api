@@ -21,6 +21,7 @@ fn rocket() -> Rocket<Build> {
     .mount("/", routes![index])
     .mount(brand::URI, routes![
         brand::get_brand, 
+        brand::get_brands,
         brand::get_all_brands, 
         brand::new_brand, 
         brand::update_brand,
