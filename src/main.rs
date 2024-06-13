@@ -4,6 +4,7 @@ extern crate diesel;
 
 use utils::routers::brand;
 use utils::routers::category;
+use utils::routers::comment;
 
 mod utils;
 mod schema;
@@ -33,6 +34,14 @@ fn rocket() -> Rocket<Build> {
         category::new_category, 
         category::update_category,
         category::delete_category,
+        ])
+    .mount(comment::URI, routes![
+        comment::get_comment_by_product_id, 
+        comment::get_all_comments, 
+        comment::get_comments, 
+        comment::new_comment,
+        comment::update_comment,
+        comment::delete_comment,
         ])
 }
 

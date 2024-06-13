@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use serde::Serialize;
 use chrono::NaiveDateTime;
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::comments)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Comment {
@@ -27,7 +27,7 @@ pub struct NewComment<'a> {
 #[diesel(table_name = crate::schema::comments)]
 pub struct UpdateComment<'a> {
     pub id: &'a i32,
-    pub text: Option<&'a str>,
+    pub text: &'a str,
 }
 
 #[derive(AsChangeset)]
