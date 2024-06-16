@@ -1,10 +1,10 @@
 use crate::utils::db::establish_connection;
-use diesel::prelude::*;
+use diesel::{prelude::*, select};
+
 use diesel::result::Error;
 use log::info;
 
 use diesel::dsl::exists;
-use diesel::select;
 
 use crate::utils::models::category::{NewCategory, UpdateCategory, Category};
 use crate::schema::categories::dsl::*;

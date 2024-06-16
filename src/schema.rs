@@ -9,6 +9,7 @@ diesel::table! {
         url_name -> Varchar,
         #[max_length = 512]
         description -> Varchar,
+        created -> Timestamp,
         published -> Bool,
     }
 }
@@ -22,6 +23,7 @@ diesel::table! {
         url_name -> Varchar,
         #[max_length = 256]
         description -> Varchar,
+        created -> Timestamp,
         published -> Bool,
     }
 }
@@ -31,9 +33,9 @@ diesel::table! {
         id -> Int4,
         #[max_length = 256]
         text -> Varchar,
-        date -> Nullable<Timestamp>,
+        created -> Timestamp,
         product_id -> Int4,
-        user_id -> Int4,
+        user_id -> Uuid,
         published -> Bool,
     }
 }
@@ -49,9 +51,9 @@ diesel::table! {
 diesel::table! {
     feedbacks (id) {
         id -> Int4,
-        date -> Nullable<Timestamp>,
+        created -> Timestamp,
         product_id -> Int4,
-        user_id -> Int4,
+        user_id -> Uuid,
         published -> Bool,
     }
 }
@@ -77,6 +79,7 @@ diesel::table! {
         image -> Nullable<Varchar>,
         brand_id -> Nullable<Int4>,
         category_id -> Nullable<Int4>,
+        created -> Timestamp,
         published -> Bool,
     }
 }
@@ -91,7 +94,7 @@ diesel::table! {
 
 diesel::table! {
     users (id) {
-        id -> Int4,
+        id -> Uuid,
         #[max_length = 32]
         username -> Varchar,
         #[max_length = 512]
@@ -99,6 +102,7 @@ diesel::table! {
         #[max_length = 64]
         email -> Varchar,
         role_id -> Int4,
+        created -> Timestamp,
         published -> Bool,
     }
 }

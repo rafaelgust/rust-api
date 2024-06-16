@@ -5,5 +5,6 @@ CREATE TABLE brands (
     name VARCHAR(128) NOT NULL,
     url_name VARCHAR(256) NOT NULL UNIQUE,
     description VARCHAR(512) NOT NULL,
+    created TIMESTAMP NOT NULL DEFAULT NOW(),
     published BOOLEAN NOT NULL DEFAULT FALSE
 );

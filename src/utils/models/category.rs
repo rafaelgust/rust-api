@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::Serialize;
 
@@ -9,6 +10,7 @@ pub struct Category {
     pub name: String,
     pub url_name: String,
     pub description: String,
+    pub created: NaiveDateTime,
     pub published: bool,
 }
 

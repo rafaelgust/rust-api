@@ -5,5 +5,6 @@ CREATE TABLE categories (
     name VARCHAR(32) NOT NULL,
     url_name VARCHAR(256) NOT NULL UNIQUE,
     description VARCHAR(256) NOT NULL,
+    created TIMESTAMP NOT NULL DEFAULT NOW(),
     published BOOLEAN NOT NULL DEFAULT FALSE
 );

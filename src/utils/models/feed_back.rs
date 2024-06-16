@@ -1,6 +1,7 @@
 use diesel::prelude::*;
 use serde::Serialize;
 use chrono::NaiveDateTime;
+use uuid::Uuid;
 
 #[derive(Queryable, Serialize)]
 #[diesel(table_name = crate::schema::feedbacks)]
@@ -17,7 +18,7 @@ pub struct Feedback {
 #[diesel(table_name = crate::schema::feedbacks)]
 pub struct NewFeedback<'a> {
     pub product_id: &'a i32,
-    pub user_id: &'a i32,
+    pub user_id: &'a Uuid,
     pub published: &'a bool,
 }
 

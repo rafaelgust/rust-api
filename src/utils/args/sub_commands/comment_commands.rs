@@ -1,6 +1,7 @@
 use clap::{Args, Subcommand};
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Subcommand)]
 pub enum CommentSubcommand {
@@ -26,7 +27,7 @@ pub struct GetCommentByProductId {
 pub struct CreateComment {
     pub text: String,
     pub product_id: i32,
-    pub user_id: i32
+    pub user_id: Uuid
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]

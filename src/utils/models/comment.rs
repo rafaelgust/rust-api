@@ -1,4 +1,6 @@
 use diesel::prelude::*;
+use uuid::Uuid;
+
 use serde::Serialize;
 use chrono::NaiveDateTime;
 
@@ -8,9 +10,9 @@ use chrono::NaiveDateTime;
 pub struct Comment {
     pub id: i32,
     pub text: String,
-    pub date: Option<NaiveDateTime>,
+    pub created: NaiveDateTime,
     pub product_id: i32,
-    pub user_id: i32,
+    pub user_id: Uuid,
     pub published: bool,
 }
 
@@ -19,7 +21,7 @@ pub struct Comment {
 pub struct NewComment<'a> {
     pub text: &'a str,
     pub product_id: &'a i32,
-    pub user_id: &'a i32,
+    pub user_id: &'a Uuid,
     pub published: bool,
 }
 

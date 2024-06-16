@@ -8,6 +8,7 @@ CREATE TABLE products (
     image VARCHAR(256),
     brand_id INTEGER,
     category_id INTEGER,
+    created TIMESTAMP NOT NULL DEFAULT NOW(),
     published BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (brand_id) REFERENCES brands(id),
     FOREIGN KEY (category_id) REFERENCES categories(id)
