@@ -1,7 +1,7 @@
 -- Your SQL goes here
 
 CREATE TABLE comments (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     text VARCHAR(256) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     product_id UUID NOT NULL,

@@ -3,6 +3,8 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use log::info;
 
+use uuid::Uuid;
+
 use crate::utils::models::comment::{NewComment, UpdateComment, Comment};
 use crate::schema::comments::dsl::*;
 
@@ -61,7 +63,10 @@ fn show_comment_by_product_id(comment: GetCommentByProductIdCommand, connection:
 fn create_comment(comment: CreateCommentCommand, connection: &mut PgConnection) -> Result<String, Error> {
     info!("Creating comment: {:?}", comment);
 
+    let uuid = Uuid::now_v7();
+
     let new_comment = NewComment {
+        id: &uuid,
         text: &comment.text,
         product_id: &comment.product_id,
         user_id: &comment.user_id,
@@ -132,9 +137,9 @@ fn comment_pagination(pagination: CommentPaginationCommand, connection: &mut PgC
     }
 
     query = if order_by_desc {
-        query.order(id.desc())
+        query.order(created_at.desc())
     } else {
-        query.order(id.asc())
+        query.order(created_at.asc())
     };
 
     query

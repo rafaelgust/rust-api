@@ -8,7 +8,7 @@ use chrono::NaiveDateTime;
 #[diesel(table_name = crate::schema::comments)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Comment {
-    pub id: i32,
+    pub id: Uuid,
     pub text: String,
     pub created_at: NaiveDateTime,
     pub product_id: Uuid,
@@ -19,6 +19,7 @@ pub struct Comment {
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::comments)]
 pub struct NewComment<'a> {
+    pub id: &'a Uuid,
     pub text: &'a str,
     pub product_id: &'a Uuid,
     pub user_id: &'a Uuid,
@@ -28,13 +29,13 @@ pub struct NewComment<'a> {
 #[derive(AsChangeset)]
 #[diesel(table_name = crate::schema::comments)]
 pub struct UpdateComment<'a> {
-    pub id: &'a i32,
+    pub id: &'a Uuid,
     pub text: &'a str,
 }
 
 #[derive(AsChangeset)]
 #[diesel(table_name = crate::schema::comments)]
 pub struct RemoveComment<'a> {
-    pub id: &'a i32,
+    pub id: &'a Uuid,
     pub published: &'a bool,
 }

@@ -37,7 +37,7 @@ diesel::table! {
 
 diesel::table! {
     comments (id) {
-        id -> Int4,
+        id -> Uuid,
         #[max_length = 256]
         text -> Varchar,
         created_at -> Timestamp,
