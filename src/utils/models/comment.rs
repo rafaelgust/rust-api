@@ -10,8 +10,8 @@ use chrono::NaiveDateTime;
 pub struct Comment {
     pub id: i32,
     pub text: String,
-    pub created: NaiveDateTime,
-    pub product_id: i32,
+    pub created_at: NaiveDateTime,
+    pub product_id: Uuid,
     pub user_id: Uuid,
     pub published: bool,
 }
@@ -20,7 +20,7 @@ pub struct Comment {
 #[diesel(table_name = crate::schema::comments)]
 pub struct NewComment<'a> {
     pub text: &'a str,
-    pub product_id: &'a i32,
+    pub product_id: &'a Uuid,
     pub user_id: &'a Uuid,
     pub published: bool,
 }

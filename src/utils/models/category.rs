@@ -10,7 +10,7 @@ pub struct Category {
     pub name: String,
     pub url_name: String,
     pub description: String,
-    pub created: NaiveDateTime,
+    pub created_at: NaiveDateTime,
     pub published: bool,
 }
 

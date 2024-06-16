@@ -2,6 +2,7 @@ use rocket::response::status::{Accepted, NotFound, Created};
 use rocket::http::uri::Origin;
 
 use rocket::serde::json::Json;
+use uuid::Uuid;
 
 use crate::utils::response::ApiResponse;
 
@@ -16,7 +17,9 @@ use crate::utils::constants::{BRAND_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
 pub const URI : Origin<'static> = uri!("/comment");
 
 #[get("/<product_id>", format = "application/json")]
-pub fn get_comment_by_product_id(product_id: i32) ->  Result<Json<Comment>, NotFound<String>> {
+pub fn get_comment_by_product_id(product_id: String) ->  Result<Json<Comment>, NotFound<String>> {
+
+    let product_id = Uuid::parse_str(&product_id).unwrap();
     
     let result = comment_ops::handle_comment_command(CommentCommand {
         command: CommentSubcommand::GetCommentByProductId(GetCommentByProductId {

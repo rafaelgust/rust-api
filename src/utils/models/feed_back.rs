@@ -9,15 +9,15 @@ use uuid::Uuid;
 pub struct Feedback {
     pub id: i32,
     pub date: Option<NaiveDateTime>,
-    pub product_id: i32,
-    pub user_id: i32,
+    pub product_id: Uuid,
+    pub user_id: Uuid,
     pub published: bool,
 }
 
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::feedbacks)]
 pub struct NewFeedback<'a> {
-    pub product_id: &'a i32,
+    pub product_id: &'a Uuid,
     pub user_id: &'a Uuid,
     pub published: &'a bool,
 }

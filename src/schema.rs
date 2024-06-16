@@ -9,7 +9,7 @@ diesel::table! {
         url_name -> Varchar,
         #[max_length = 512]
         description -> Varchar,
-        created -> Timestamp,
+        created_at -> Timestamp,
         published -> Bool,
     }
 }
@@ -23,8 +23,15 @@ diesel::table! {
         url_name -> Varchar,
         #[max_length = 256]
         description -> Varchar,
-        created -> Timestamp,
+        created_at -> Timestamp,
         published -> Bool,
+    }
+}
+
+diesel::table! {
+    categories_related (parent_id, child_id) {
+        parent_id -> Int4,
+        child_id -> Int4,
     }
 }
 
@@ -33,8 +40,8 @@ diesel::table! {
         id -> Int4,
         #[max_length = 256]
         text -> Varchar,
-        created -> Timestamp,
-        product_id -> Int4,
+        created_at -> Timestamp,
+        product_id -> Uuid,
         user_id -> Uuid,
         published -> Bool,
     }
@@ -51,9 +58,9 @@ diesel::table! {
 diesel::table! {
     feedbacks (id) {
         id -> Int4,
-        created -> Timestamp,
-        product_id -> Int4,
+        product_id -> Uuid,
         user_id -> Uuid,
+        created_at -> Timestamp,
         published -> Bool,
     }
 }
@@ -69,7 +76,7 @@ diesel::table! {
 
 diesel::table! {
     products (id) {
-        id -> Int4,
+        id -> Uuid,
         #[max_length = 256]
         name -> Varchar,
         #[max_length = 512]
@@ -79,7 +86,7 @@ diesel::table! {
         image -> Nullable<Varchar>,
         brand_id -> Nullable<Int4>,
         category_id -> Nullable<Int4>,
-        created -> Timestamp,
+        created_at -> Timestamp,
         published -> Bool,
     }
 }
@@ -102,7 +109,7 @@ diesel::table! {
         #[max_length = 64]
         email -> Varchar,
         role_id -> Int4,
-        created -> Timestamp,
+        created_at -> Timestamp,
         published -> Bool,
     }
 }
@@ -119,6 +126,7 @@ diesel::joinable!(users -> roles (role_id));
 diesel::allow_tables_to_appear_in_same_query!(
     brands,
     categories,
+    categories_related,
     comments,
     feedback_types,
     feedbacks,

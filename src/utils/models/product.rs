@@ -1,11 +1,12 @@
 use diesel::prelude::*;
 use serde::Serialize;
+use uuid::Uuid;
 
 #[derive(Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::products)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Product {
-    pub id: i32,
+    pub id: Uuid,
     pub name: String,
     pub url_name: String,
     pub description: String,
@@ -30,7 +31,7 @@ pub struct NewProduct<'a> {
 #[derive(AsChangeset)]
 #[diesel(table_name = crate::schema::products)]
 pub struct UpdateProduct<'a> {
-    pub id: &'a i32,
+    pub id: &'a Uuid,
     pub name: Option<&'a str>,
     pub url_name: Option<&'a str>,
     pub description: Option<&'a str>,
@@ -43,6 +44,6 @@ pub struct UpdateProduct<'a> {
 #[derive(AsChangeset)]
 #[diesel(table_name = crate::schema::products)]
 pub struct RemoveProduct<'a> {
-    pub id: &'a i32,
+    pub id: &'a Uuid,
     pub published: Option<&'a bool>,
 }

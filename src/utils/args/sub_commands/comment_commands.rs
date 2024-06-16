@@ -20,13 +20,13 @@ pub enum CommentSubcommand {
 
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct GetCommentByProductId {
-    pub product_id: i32,
+    pub product_id: Uuid,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct CreateComment {
     pub text: String,
-    pub product_id: i32,
+    pub product_id: Uuid,
     pub user_id: Uuid
 }
 
