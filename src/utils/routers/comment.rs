@@ -11,7 +11,7 @@ use crate::utils::ops::comment_ops::{self, CommentResult};
 use crate::utils::args::commands::CommentCommand;
 use crate::utils::args::sub_commands::comment_commands::{CommentSubcommand, CreateComment, DeleteComment, GetCommentByProductId, UpdateComment as UpdateCommentCommand, CommentPagination};
 
-use crate::utils::constants::{BRAND_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
+use crate::utils::constants::{COMMENT_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
 
 use crate::utils::cryptography::{base32hex_to_uuid, uuid_to_base32hex};
 
@@ -24,7 +24,7 @@ pub fn get_comment_by_product_id(product_id: &str) ->  Result<Json<Comment>, Not
         Ok(uuid) => uuid,
         Err(err) => {
             eprintln!("Error decoding base32hex to UUID: {}", err);
-            return Err(NotFound(BRAND_NOT_FOUND.to_string()))
+            return Err(NotFound(COMMENT_NOT_FOUND.to_string()))
         }
     };
     
@@ -36,7 +36,7 @@ pub fn get_comment_by_product_id(product_id: &str) ->  Result<Json<Comment>, Not
 
     match result {
         Ok(CommentResult::Comment(Some(comment))) => Ok(Json(comment)),
-        Ok(_) => Err(NotFound(BRAND_NOT_FOUND.to_string())),
+        Ok(_) => Err(NotFound(COMMENT_NOT_FOUND.to_string())),
         Err(_) => Err(NotFound(FETCH_ERROR.to_string())),
     }
 }
@@ -70,7 +70,7 @@ pub fn get_all_comments() -> Result<Json<ApiResponse<Vec<CommentResponse>>>, Not
             Ok(Json(json_response))
         },
         Ok(_) => {
-            let json_response: ApiResponse<String> = ApiResponse::new_error(BRAND_NOT_FOUND.to_string());
+            let json_response: ApiResponse<String> = ApiResponse::new_error(COMMENT_NOT_FOUND.to_string());
 
             let json_string = serde_json::to_string(&json_response).unwrap();
 
@@ -106,7 +106,7 @@ pub fn get_comments(comments: Json<CommentPagination>) -> Result<Json<ApiRespons
             Ok(Json(json_response))
         },
         Ok(_) => {
-            let json_response: ApiResponse<String> = ApiResponse::new_error(BRAND_NOT_FOUND.to_string());
+            let json_response: ApiResponse<String> = ApiResponse::new_error(COMMENT_NOT_FOUND.to_string());
 
             let json_string = serde_json::to_string(&json_response).unwrap();
 

@@ -14,7 +14,7 @@ pub fn uuid_to_base32hex(uuid: Uuid) -> String {
 pub fn base32hex_to_uuid(base32hex: &str) -> Result<Uuid, String> {
     let decoded_bytes = match BASE32HEX_NOPAD.decode(base32hex.as_bytes()) {
         Ok(bytes) => bytes,
-        Err(err) => return Err(format!("Error decoding base32hex: {}", err)),
+        Err(err) => return Err(format!("Error decoding: {}", err)),
     };
 
     match Uuid::from_slice(&decoded_bytes) {

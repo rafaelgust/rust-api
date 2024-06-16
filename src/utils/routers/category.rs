@@ -10,7 +10,7 @@ use crate::utils::ops::category_ops::{self, CategoryResult};
 use crate::utils::args::commands::CategoryCommand;
 use crate::utils::args::sub_commands::category_commands::{CategorySubcommand, CreateCategory, DeleteCategory, GetCategoryByUrlName, UpdateCategory as UpdateCategoryCommand};
 
-use crate::utils::constants::{BRAND_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
+use crate::utils::constants::{CATEGORY_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
 
 pub const URI : Origin<'static> = uri!("/category");
 
@@ -25,7 +25,7 @@ pub fn get_category(category_url_name: String) ->  Result<Json<Category>, NotFou
 
     match result {
         Ok(CategoryResult::Category(Some(category))) => Ok(Json(category)),
-        Ok(_) => Err(NotFound(BRAND_NOT_FOUND.to_string())),
+        Ok(_) => Err(NotFound(CATEGORY_NOT_FOUND.to_string())),
         Err(_) => Err(NotFound(FETCH_ERROR.to_string())),
     }
 }
@@ -38,7 +38,7 @@ pub fn get_all_categories() -> Result<Json<Vec<Category>>, NotFound<String>> {
 
     match result {
         Ok(CategoryResult::Categories(category)) => Ok(Json(category)),
-        Ok(_) => Err(NotFound(BRAND_NOT_FOUND.to_string())),
+        Ok(_) => Err(NotFound(CATEGORY_NOT_FOUND.to_string())),
         Err(_) => Err(NotFound(FETCH_ERROR.to_string())),
     }
 }
