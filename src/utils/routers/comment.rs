@@ -2,11 +2,10 @@ use rocket::response::status::{Accepted, NotFound, Created};
 use rocket::http::uri::Origin;
 
 use rocket::serde::json::Json;
-use uuid::Uuid;
 
 use crate::utils::response::ApiResponse;
 
-use crate::utils::models::comment::Comment;
+use crate::utils::models::comment::{Comment, CommentResponse};
 use crate::utils::ops::comment_ops::{self, CommentResult};
 
 use crate::utils::args::commands::CommentCommand;
@@ -14,16 +13,24 @@ use crate::utils::args::sub_commands::comment_commands::{CommentSubcommand, Crea
 
 use crate::utils::constants::{BRAND_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
 
+use crate::utils::cryptography::{base32hex_to_uuid, uuid_to_base32hex};
+
 pub const URI : Origin<'static> = uri!("/comment");
 
 #[get("/<product_id>", format = "application/json")]
-pub fn get_comment_by_product_id(product_id: String) ->  Result<Json<Comment>, NotFound<String>> {
+pub fn get_comment_by_product_id(product_id: &str) ->  Result<Json<Comment>, NotFound<String>> {
 
-    let product_id = Uuid::parse_str(&product_id).unwrap();
+    let product_id_uuid = match base32hex_to_uuid(&product_id) {
+        Ok(uuid) => uuid,
+        Err(err) => {
+            eprintln!("Error decoding base32hex to UUID: {}", err);
+            return Err(NotFound(BRAND_NOT_FOUND.to_string()))
+        }
+    };
     
     let result = comment_ops::handle_comment_command(CommentCommand {
         command: CommentSubcommand::GetCommentByProductId(GetCommentByProductId {
-            product_id: product_id
+            product_id: product_id_uuid
         }),
     });
 
@@ -33,17 +40,33 @@ pub fn get_comment_by_product_id(product_id: String) ->  Result<Json<Comment>, N
         Err(_) => Err(NotFound(FETCH_ERROR.to_string())),
     }
 }
+
 #[get("/", format = "application/json")]
-pub fn get_all_comments() -> Result<Json<ApiResponse<Vec<Comment>>>, NotFound<String>> {
+pub fn get_all_comments() -> Result<Json<ApiResponse<Vec<CommentResponse>>>, NotFound<String>> {
     
     let result = comment_ops::handle_comment_command(CommentCommand {
         command: CommentSubcommand::ShowAll,
     });
 
     match result {
-        Ok(CommentResult::Comments(comment)) => {
-            let json_response: ApiResponse<Vec<Comment>> = ApiResponse::new_success_data(comment);
-            
+        Ok(CommentResult::Comments(comments)) => {
+
+            let comments_with_base32hex: Vec<CommentResponse> = comments.into_iter().map(|comment| {
+                let id_base32hex = uuid_to_base32hex(comment.id);
+                let product_id_base32hex = uuid_to_base32hex(comment.product_id);
+                let user_id_base32hex = uuid_to_base32hex(comment.user_id);
+                
+                CommentResponse {
+                    id: id_base32hex,
+                    text: comment.text,
+                    created_at: comment.created_at,
+                    product_id: product_id_base32hex,
+                    user_id: user_id_base32hex
+                }
+            }).collect();
+
+            let json_response: ApiResponse<Vec<CommentResponse>> = ApiResponse::new_success_data(comments_with_base32hex);
+
             Ok(Json(json_response))
         },
         Ok(_) => {

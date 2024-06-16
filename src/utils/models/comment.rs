@@ -39,3 +39,11 @@ pub struct RemoveComment<'a> {
     pub id: &'a Uuid,
     pub published: &'a bool,
 }
+#[derive(Serialize)]
+pub struct CommentResponse {
+    pub id: String,
+    pub text: String,
+    pub created_at: NaiveDateTime,
+    pub product_id: String,
+    pub user_id: String
+}
