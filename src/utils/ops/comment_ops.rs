@@ -143,7 +143,7 @@ fn comment_pagination(pagination: CommentPaginationCommand, connection: &mut PgC
     };
 
     query
-        .limit(limit)
+        .limit(limit as i64)
         .load::<Comment>(connection)
 }
 

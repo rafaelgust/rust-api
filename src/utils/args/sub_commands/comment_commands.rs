@@ -43,7 +43,7 @@ pub struct DeleteComment {
 
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct CommentPagination {
-    pub limit: Option<i64>, 
+    pub limit: Option<i8>, 
     pub last_id: Option<Uuid>, 
     pub order_by_desc: Option<bool>
 }
