@@ -3,6 +3,7 @@ use clap::{Args, Parser, Subcommand};
 use super::sub_commands::brand_commands::BrandSubcommand;
 use super::sub_commands::category_commands::CategorySubcommand;
 use super::sub_commands::comment_commands::CommentSubcommand;
+use super::sub_commands::product_commands::ProductSubcommand;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
@@ -30,4 +31,5 @@ pub struct EntityCommand<T: Subcommand> {
 pub type BrandCommand = EntityCommand<BrandSubcommand>;
 pub type CategoryCommand = EntityCommand<CategorySubcommand>;
 pub type CommentCommand = EntityCommand<CommentSubcommand>;
+pub type ProductCommand = EntityCommand<ProductSubcommand>;
 
