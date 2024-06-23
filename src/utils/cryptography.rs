@@ -2,7 +2,7 @@ use std::str;
 use uuid::Uuid;
 use data_encoding::BASE32HEX_NOPAD;
 
-#[warn(dead_code)]
+#[allow(dead_code)]
 pub fn string_to_uuid(uuid: &str) -> Uuid {
     Uuid::parse_str(&uuid).unwrap()
 }

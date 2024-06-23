@@ -51,27 +51,29 @@ pub struct CommentResponse {
 }
 
 // Request
-#[derive(Serialize, Deserialize)]
+use std::borrow::Cow;
+
+#[derive(Deserialize)]
 pub struct InsertCommentRequest<'a> {
-    pub text: String, 
-    pub product_id: &'a str, 
-    pub user_id: &'a str
+    pub text: Cow<'a, str>,
+    pub product_id: Cow<'a, str>,
+    pub user_id: Cow<'a, str>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct UpdateCommentRequest<'a> {
-    pub id: &'a str, 
-    pub text: String, 
+    pub id: Cow<'a, str>,
+    pub text: Cow<'a, str>
 }
 
 #[derive(Deserialize)]
 pub struct DeleteCommentRequest<'a> {
-    pub id: &'a str
+    pub id: Cow<'a, str>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct CommentPaginationRequest<'a> {
     pub limit: Option<i8>, 
-    pub last_id: Option<&'a str>, 
+    pub last_id: Option<Cow<'a, str>>, 
     pub order_by_desc: Option<bool>
 }

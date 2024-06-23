@@ -23,8 +23,8 @@ pub struct CreateProduct {
     pub url_name: String,
     pub description: String,
     pub image: Option<String>,
-    pub brand_id: Option<i32>,
-    pub category_id: Option<i32>,
+    pub brand_id: i32,
+    pub category_id: i32,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]

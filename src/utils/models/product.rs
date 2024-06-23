@@ -26,8 +26,8 @@ pub struct NewProduct<'a> {
     pub url_name: &'a str,
     pub description: &'a str,
     pub image: Option<&'a str>,
-    pub brand_id: Option<i32>,
-    pub category_id: Option<i32>,
+    pub brand_id: i32,
+    pub category_id: i32,
     pub published: bool,
 }
 
@@ -59,36 +59,38 @@ pub struct ProductResponse {
 }
 
 // Request
-#[derive(Serialize, Deserialize)]
-pub struct InsertProductRequest {
-    pub name: String,
-    pub url_name: String,
-    pub description: String,
-    pub image: Option<String>,
-    pub brand_id: Option<i32>,
-    pub category_id: Option<i32>,
-}
+use std::borrow::Cow;
 
-#[derive(Serialize, Deserialize)]
-pub struct UpdateProductRequest {
-    pub id: String,
-    pub name: Option<String>,
-    pub url_name: Option<String>,
-    pub description: Option<String>,
-    pub image: Option<String>,
-    pub brand_id: Option<i32>,
-    pub category_id: Option<i32>,
-    pub published: Option<bool>,
+#[derive(Deserialize)]
+pub struct InsertProductRequest<'a> {
+    pub name: Cow<'a, str>,
+    pub url_name: Cow<'a, str>,
+    pub description: Cow<'a, str>,
+    pub image: Option<Cow<'a, str>>,
+    pub brand_id: i32,
+    pub category_id: i32
 }
 
 #[derive(Deserialize)]
-pub struct DeleteProductRequest {
-    pub id: String,
+pub struct UpdateProductRequest<'a> {
+    pub id: Cow<'a, str>,
+    pub name: Option<Cow<'a, str>>,
+    pub url_name: Option<Cow<'a, str>>,
+    pub description: Option<Cow<'a, str>>,
+    pub image: Option<Cow<'a, str>>,
+    pub brand_id: Option<i32>,
+    pub category_id: Option<i32>,
+    pub published: Option<bool>
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct ProductPaginationRequest {
+#[derive(Deserialize)]
+pub struct DeleteProductRequest<'a> {
+    pub id: Cow<'a, str>,
+}
+
+#[derive(Deserialize)]
+pub struct ProductPaginationRequest<'a> {
     pub limit: Option<i8>,
-    pub last_id: Option<String>,
+    pub last_id: Option<Cow<'a, str>>,
     pub order_by_desc: Option<bool>,
 }
