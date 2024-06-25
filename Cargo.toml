@@ -19,4 +19,5 @@ clap = { version = "4.4.8", features = ["derive"] }
 chrono = { version = "0.4.35", features = ["serde"] }
 
 log = "0.4.20"
-jwt-simple = "0.12.9"
+jsonwebtoken = "9.3.0"
+bcrypt = "0.15.1"
