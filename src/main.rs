@@ -1,8 +1,10 @@
 
 use std::{env, net::{IpAddr, SocketAddr}, str::FromStr};
 
-use axum::{routing::{get, post}, middleware, Router, http::StatusCode};
+use axum::{http::{self, HeaderValue, Method, StatusCode}, middleware, routing::{get, post}, Router};
 use axum::response::Response;
+
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 use dotenv::dotenv;
 use serde_json::json;
@@ -57,12 +59,23 @@ pub fn create_router() -> Router {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+
+    // Configurar o CORS
+    let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::exact("https://glammount.com".parse::<HeaderValue>().unwrap()))
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::PATCH, Method::OPTIONS])
+        .allow_headers([
+            http::header::CONTENT_TYPE,
+            http::header::AUTHORIZATION,
+            http::header::ACCEPT,
+        ])
+        .allow_credentials(true);
     
     let ip = env::var("SERVER_IP").unwrap_or_else(|_| "127.0.0.1".to_string());
     let port = env::var("SERVER_PORT")
         .ok()
         .and_then(|p| p.parse().ok())
-        .unwrap_or(8000);
+        .unwrap_or(8080);
 
     let ip_addr = IpAddr::from_str(&ip).expect("Invalid IP address");
     let addr = SocketAddr::new(ip_addr, port);
@@ -74,7 +87,8 @@ async fn main() {
     println!("Listening on {}:{}...", ip, port);
 
     let routes = Router::new()
-        .nest("/api", create_router());
+        .nest("/api", create_router())
+        .layer(cors);
     
     println!("Server running on http://{}:{}", ip, port);
 

@@ -18,6 +18,7 @@ pub struct Claims {
     pub exp: usize,   // expiration time
     pub iat: usize,   // issued at
     pub email: String,
+    pub username: String,
 }
 
 pub struct AuthError {
@@ -43,7 +44,7 @@ pub fn hash_password(password: &str) -> Result<String, bcrypt::BcryptError> {
     hash(password, DEFAULT_COST)
 }
 
-pub fn encode_jwt(user_id: Uuid, email: String, expires_in: i64) -> Result<String, StatusCode> {
+pub fn encode_jwt(user_id: Uuid, email: String, username: String, expires_in: i64) -> Result<String, StatusCode> {
     dotenv().ok();
 
     let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
@@ -56,7 +57,8 @@ pub fn encode_jwt(user_id: Uuid, email: String, expires_in: i64) -> Result<Strin
         sub: user_id.to_string(),
         iat, 
         exp, 
-        email 
+        email,
+        username
     };
 
     encode(
@@ -162,13 +164,13 @@ pub async fn sign_in(
         });
     }
 
-    let access_token = encode_jwt(user.id, user.email.clone(), 3600)
+    let access_token = encode_jwt(user.id, user.email.clone(), user.username.clone(), 3600)
         .map_err(|_| AuthError {
             message: "Failed to generate access token".to_string(),
             status_code: StatusCode::INTERNAL_SERVER_ERROR,
         })?;
 
-    let refresh_token = encode_jwt(user.id, user.email, 86400 * 7)
+    let refresh_token = encode_jwt(user.id, user.email, user.username, 86400 * 7)
         .map_err(|_| AuthError {
             message: "Failed to generate refresh token".to_string(),
             status_code: StatusCode::INTERNAL_SERVER_ERROR,
@@ -208,13 +210,13 @@ pub async fn refresh_access_token(
             status_code: StatusCode::UNAUTHORIZED,
         })?;
 
-    let new_access_token = encode_jwt(user.id, user.email.clone(), 3600)
+    let new_access_token = encode_jwt(user.id, user.email.clone(), user.username.clone(),  3600)
         .map_err(|_| AuthError {
             message: "Failed to generate access token".to_string(),
             status_code: StatusCode::INTERNAL_SERVER_ERROR,
         })?;
 
-    let new_refresh_token = encode_jwt(user.id, user.email, 86400 * 7)
+    let new_refresh_token = encode_jwt(user.id, user.email, user.username,   86400 * 7)
         .map_err(|_| AuthError {
             message: "Failed to generate refresh token".to_string(),
             status_code: StatusCode::INTERNAL_SERVER_ERROR,
