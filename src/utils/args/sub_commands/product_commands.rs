@@ -5,6 +5,7 @@ use uuid::Uuid;
 #[derive(Debug, Subcommand)]
 pub enum ProductSubcommand {
     GetProductById(GetProductById),
+    GetProductByIdUrlName(GetProductByIdUrlName),
     Create(CreateProduct),
     Update(UpdateProduct),
     Delete(DeleteProduct),
@@ -15,6 +16,11 @@ pub enum ProductSubcommand {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct GetProductById {
     pub id: Uuid,
+}
+
+#[derive(Debug, Args, Deserialize, Serialize)]
+pub struct GetProductByIdUrlName {
+    pub url_name: String,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]

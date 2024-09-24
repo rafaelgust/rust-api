@@ -7,22 +7,54 @@ use axum::{
 };
 use serde_json::json;
 
-use crate::utils::response::ApiResponse;
+use crate::utils::{models::{brand::Brand, product::Product}, response::ApiResponse};
 use crate::utils::models::product::{ProductPaginationRequest, ProductResponse, DeleteProductRequest, InsertProductRequest, UpdateProductRequest};
 use crate::utils::ops::product_ops::{self, ProductResult};
 use crate::utils::args::commands::ProductCommand;
-use crate::utils::args::sub_commands::product_commands::{ProductSubcommand, CreateProduct, DeleteProduct, GetProductById, UpdateProduct as UpdateProductCommand, ProductPagination};
+use crate::utils::args::sub_commands::product_commands::{ProductSubcommand, CreateProduct, DeleteProduct, GetProductById, GetProductByIdUrlName, UpdateProduct as UpdateProductCommand, ProductPagination};
 use crate::utils::constants::{PRODUCT_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
 use crate::utils::cryptography::{base32hex_to_uuid, uuid_to_base32hex};
 
 pub fn get_product_routes() -> Router {
     Router::new()
+        .route("/p/:url_name", get(get_product_by_url_name))
         .route("/product/:id", get(get_product_by_id))
         .route("/product", get(get_all_products))
         .route("/product/list", post(get_products))
         .route("/product", post(new_product))
         .route("/product", put(update_product))
         .route("/product", delete(delete_product))
+}
+
+pub fn create_product_response(product: Product, brand: Option<Brand>) -> ProductResponse {
+    ProductResponse {
+        id: uuid_to_base32hex(product.id),
+        name: product.name,
+        url_name: product.url_name,
+        description: product.description,
+        image: product.image,
+        brand: brand,
+        category_id: product.category_id,
+        created_at: product.created_at,
+        published: product.published,
+    }
+}
+
+async fn get_product_by_url_name(Path(url_name): Path<String>) -> impl IntoResponse {
+    let result = product_ops::handle_product_command(ProductCommand {
+        command: ProductSubcommand::GetProductByIdUrlName(GetProductByIdUrlName {
+            url_name: url_name,
+        }),
+    });
+
+    match result {
+        Ok(ProductResult::Product(Some((product, brand)))) => {
+            let response = create_product_response(product, brand);
+            (StatusCode::OK, Json(response)).into_response()
+        },
+        Ok(_) => (StatusCode::NOT_FOUND, Json(json!({"error": PRODUCT_NOT_FOUND}))).into_response(),
+        Err(_) => (StatusCode::NOT_FOUND, Json(json!({"error": FETCH_ERROR}))).into_response(),
+    }
 }
 
 async fn get_product_by_id(Path(id): Path<String>) -> impl IntoResponse {
@@ -41,18 +73,8 @@ async fn get_product_by_id(Path(id): Path<String>) -> impl IntoResponse {
     });
 
     match result {
-        Ok(ProductResult::Product(Some(product))) => {
-            let response = ProductResponse {
-                id: uuid_to_base32hex(product.id),
-                name: product.name,
-                url_name: product.url_name,
-                description: product.description,
-                image: product.image,
-                brand_id: product.brand_id,
-                category_id: product.category_id,
-                created_at: product.created_at,
-                published: product.published,
-            };
+        Ok(ProductResult::Product(Some((product, brand)))) => {
+            let response = create_product_response(product, brand);
             (StatusCode::OK, Json(response)).into_response()
         },
         Ok(_) => (StatusCode::NOT_FOUND, Json(json!({"error": PRODUCT_NOT_FOUND}))).into_response(),
@@ -67,19 +89,12 @@ async fn get_all_products() -> impl IntoResponse {
 
     match result {
         Ok(ProductResult::Products(products)) => {
-            let products_with_base32hex: Vec<ProductResponse> = products.into_iter().map(|product| ProductResponse {
-                id: uuid_to_base32hex(product.id),
-                name: product.name,
-                url_name: product.url_name,
-                description: product.description,
-                image: product.image,
-                brand_id: product.brand_id,
-                category_id: product.category_id,
-                created_at: product.created_at,
-                published: product.published,
-            }).collect();
+            let products_responses: Vec<ProductResponse> = products
+                .into_iter()
+                .filter_map(|opt_product_brand| opt_product_brand.map(|(product, brand)| create_product_response(product, brand)))
+                .collect();
 
-            let json_response: ApiResponse<Vec<ProductResponse>> = ApiResponse::new_success_data(products_with_base32hex);
+            let json_response: ApiResponse<Vec<ProductResponse>> = ApiResponse::new_success_data(products_responses);
             (StatusCode::OK, Json(json_response)).into_response()
         },
         Ok(_) => {
@@ -115,19 +130,12 @@ async fn get_products(Json(products): Json<ProductPaginationRequest<'_>>) -> imp
 
     match result {
         Ok(ProductResult::Products(products)) => {
-            let products_with_base32hex: Vec<ProductResponse> = products.into_iter().map(|product| ProductResponse {
-                id: uuid_to_base32hex(product.id),
-                name: product.name,
-                url_name: product.url_name,
-                description: product.description,
-                image: product.image,
-                brand_id: product.brand_id,
-                category_id: product.category_id,
-                created_at: product.created_at,
-                published: product.published,
-            }).collect();
+            let products_responses: Vec<ProductResponse> = products
+                .into_iter()
+                .filter_map(|opt_product_brand| opt_product_brand.map(|(product, brand)| create_product_response(product, brand)))
+                .collect();
 
-            let json_response: ApiResponse<Vec<ProductResponse>> = ApiResponse::new_success_data(products_with_base32hex);
+            let json_response: ApiResponse<Vec<ProductResponse>> = ApiResponse::new_success_data(products_responses);
             (StatusCode::OK, Json(json_response)).into_response()
         },
         Ok(_) => {
@@ -196,19 +204,9 @@ async fn update_product(Json(product): Json<UpdateProductRequest<'_>>) -> impl I
     });
 
     match result {
-        Ok(ProductResult::Product(Some(product))) => {
-            let response = ProductResponse {
-                id: uuid_to_base32hex(product.id),
-                name: product.name,
-                url_name: product.url_name,
-                description: product.description,
-                image: product.image,
-                brand_id: product.brand_id,
-                category_id: product.category_id,
-                created_at: product.created_at,
-                published: product.published,
-            };
-            (StatusCode::ACCEPTED, Json(response)).into_response()
+        Ok(ProductResult::Product(Some((product, brand)))) => {
+            let response = create_product_response(product, brand);
+            (StatusCode::OK, Json(response)).into_response()
         },
         Ok(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": UNEXPECTED_RESULT}))).into_response(),
         Err(err) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": err.to_string()}))).into_response(),

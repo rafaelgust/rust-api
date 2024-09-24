@@ -45,6 +45,8 @@ pub struct UpdateProduct<'a> {
 }
 
 // Response
+use super::brand::Brand;
+
 #[derive(Serialize)]
 pub struct ProductResponse {
     pub id: String,
@@ -52,7 +54,7 @@ pub struct ProductResponse {
     pub url_name: String,
     pub description: String,
     pub image: Option<String>,
-    pub brand_id: Option<i32>,
+    pub brand: Option<Brand>,
     pub category_id: Option<i32>,
     pub created_at: NaiveDateTime,
     pub published: bool,

@@ -71,11 +71,11 @@ async fn main() {
         ])
         .allow_credentials(true);
     
-    let ip = env::var("SERVER_IP").unwrap_or_else(|_| "127.0.0.1".to_string());
+    let ip = env::var("SERVER_IP").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = env::var("SERVER_PORT")
         .ok()
         .and_then(|p| p.parse().ok())
-        .unwrap_or(8080);
+        .unwrap_or(3333);
 
     let ip_addr = IpAddr::from_str(&ip).expect("Invalid IP address");
     let addr = SocketAddr::new(ip_addr, port);
