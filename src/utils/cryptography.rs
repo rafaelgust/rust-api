@@ -1,4 +1,5 @@
 use std::str;
+use bcrypt::{hash, verify, DEFAULT_COST};
 use uuid::Uuid;
 use data_encoding::BASE32HEX_NOPAD;
 
@@ -21,6 +22,13 @@ pub fn base32hex_to_uuid(base32hex: &str) -> Result<Uuid, String> {
         Ok(uuid) => Ok(uuid),
         Err(err) => Err(format!("Error creating UUID from decoded bytes: {}", err)),
     }
+}
+
+pub fn verify_password(password: &str, hash: &str) -> Result<bool, bcrypt::BcryptError> {
+    verify(password, hash)
+}
+pub fn hash_password(password: &str) -> Result<String, bcrypt::BcryptError> {
+    hash(password, DEFAULT_COST)
 }
 
 // testes unitários

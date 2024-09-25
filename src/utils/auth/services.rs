@@ -1,7 +1,8 @@
 use axum::{Extension, Json, response::IntoResponse};
 use serde::{Serialize, Deserialize};
 
-use crate::utils::{auth::jwt::CurrentUser, cryptography::uuid_to_base32hex};
+use crate::auth::models::CurrentUser;
+use crate::utils::cryptography::uuid_to_base32hex;
 
 #[derive(Serialize, Deserialize)]
 struct UserResponse {

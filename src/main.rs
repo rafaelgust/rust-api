@@ -10,7 +10,7 @@ use dotenv::dotenv;
 use serde_json::json;
 use tokio::net::TcpListener;
 
-use utils::{auth::jwt::authorize, routers::brand::get_brand_routes};
+use utils::{auth::handlers::authorize, routers::brand::get_brand_routes};
 use utils::routers::category::get_category_routes;
 use utils::routers::comment::get_comment_routes;
 use utils::routers::product::get_product_routes;
@@ -34,13 +34,13 @@ async fn root() -> Response<String> {
 pub fn create_router() -> Router {
     let protected_routes = Router::new()
         .route("/protected", get(auth::services::hello))
-        .route("/signup", get(auth::jwt::sign_out))
+        .route("/signup", get(auth::handlers::sign_out))
         .layer(middleware::from_fn(authorize));
 
     let public_routes = Router::new()
         .route("/", get(root))
-        .route("/signin", post(auth::jwt::sign_in))
-        .route("/refresh", post(auth::jwt::refresh_access_token));
+        .route("/signin", post(auth::handlers::sign_in))
+        .route("/refresh", post(auth::handlers::refresh_access_token));
 
     let brand_routes = get_brand_routes();
     let category_routes = get_category_routes();
