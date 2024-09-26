@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use axum::{
     body::Body,
     http::{Response, StatusCode},
@@ -35,6 +37,13 @@ impl IntoResponse for AuthError {
         let body = Json(json!({ "error": self.message }));
         (self.status_code, body).into_response()
     }
+}
+
+#[derive(Deserialize)]
+pub struct CreateUserData<'a> {
+    pub email: Cow<'a, str>,
+    pub username: Cow<'a, str>,
+    pub password: Cow<'a, str>,
 }
 
 #[derive(Deserialize)]

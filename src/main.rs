@@ -10,7 +10,8 @@ use dotenv::dotenv;
 use serde_json::json;
 use tokio::net::TcpListener;
 
-use utils::{auth::handlers::authorize, routers::brand::get_brand_routes};
+use utils::auth::handlers::authorize;
+use utils::routers::brand::get_brand_routes;
 use utils::routers::category::get_category_routes;
 use utils::routers::comment::get_comment_routes;
 use utils::routers::product::get_product_routes;
@@ -39,6 +40,7 @@ pub fn create_router() -> Router {
 
     let public_routes = Router::new()
         .route("/", get(root))
+        .route("/create", post(auth::handlers::create_user))
         .route("/signin", post(auth::handlers::sign_in))
         .route("/refresh", post(auth::handlers::refresh_access_token));
 

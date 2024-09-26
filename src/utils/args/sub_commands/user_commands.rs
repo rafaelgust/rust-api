@@ -8,12 +8,19 @@ pub enum UserSubcommand {
     Create(CreateUser),
     Update(UpdateUser),
     Delete(DeleteUser),
+    VerifyUserName(UserName),
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct Auth {
     pub email: String,
 }
+
+#[derive(Debug, Args, Deserialize, Serialize)]
+pub struct UserName {
+    pub username: String,
+}
+
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct CreateUser {
     pub username: String,

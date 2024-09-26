@@ -2,20 +2,71 @@ use axum::{
     body::Body,
     extract::{Json, Request},
     http::{self, Response, StatusCode},
-    middleware::Next,
+    middleware::Next, response::IntoResponse,
 };
 use chrono::Utc;
-use uuid::Uuid;
+use serde_json::json;
 
-use crate::auth::{
-    jwt::{encode_jwt, decode_jwt},
-    models::{AuthError, CurrentUser, SignInData, Tokens, RefreshTokenData},
-};
+use crate::{auth::{
+    jwt::{decode_jwt, encode_jwt},
+    models::{AuthError, CurrentUser, RefreshTokenData, SignInData, Tokens},
+}, utils::{args::sub_commands::user_commands::{CreateUser, UserName}, response::ApiResponse}};
 use crate::utils::{
     cryptography::{verify_password, hash_password},
     ops::user_ops::{self, UserResult},
     args::{commands::UserCommand, sub_commands::user_commands::{Auth, UserSubcommand}},
 };
+
+use crate::utils::constants::UNEXPECTED_RESULT;
+
+use crate::auth::models::CreateUserData;
+
+pub async fn create_user(Json(new_user_data): Json<CreateUserData<'_>>) ->  impl IntoResponse {
+
+    let hashed_password = match hash_password(&new_user_data.password.trim().to_string()) {
+        Ok(hash) => hash,
+        Err(_) => {
+            eprintln!("Failed to hash password");
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "Failed to hash password"}))).into_response();
+        }
+    };
+
+    let user = CreateUser {
+        email: new_user_data.email.trim().to_string(),
+        username: new_user_data.username.trim().to_string(),
+        password_hash: hashed_password,
+        role_id: 4,
+    };
+    
+    if retrieve_user_by_email(&user.email).is_some() {
+        let json_response: ApiResponse<String> = ApiResponse::new_error("Email already in use".to_string());
+        return (StatusCode::CONFLICT, Json(json_response)).into_response();
+    }
+
+    if check_exist_username(&user.username) {
+        let json_response: ApiResponse<String> = ApiResponse::new_error("Username already in use".to_string());
+        return (StatusCode::CONFLICT, Json(json_response)).into_response();
+    }
+
+    let result = user_ops::handle_user_command(UserCommand {
+        command: UserSubcommand::Create(user),
+    });
+
+    match result {
+        Ok(UserResult::Message(e)) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_success_message(format!("User {} was successfully created", e.unwrap()));
+            (StatusCode::CREATED, Json(json_response)).into_response()
+        },
+        Ok(_) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error(UNEXPECTED_RESULT.to_string());
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json_response)).into_response()
+        },
+        Err(err) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error(err.to_string());
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json_response)).into_response()
+        },
+    }
+}
 
 pub async fn authorize(
     mut req: Request,
@@ -146,6 +197,19 @@ pub async fn sign_out(_req: Request) -> Result<StatusCode, AuthError> {
     // Implement any necessary logic for signing out
     // For now, we're just returning OK
     Ok(StatusCode::OK)
+}
+
+fn check_exist_username(username: &str) -> bool {
+    let result = user_ops::handle_user_command(UserCommand {
+        command: UserSubcommand::VerifyUserName(UserName {
+            username: username.trim().to_string(),
+        }),
+    });
+
+    match result {
+        Ok(UserResult::Message(Some(_))) => true,
+        _ => false,
+    }
 }
 
 fn retrieve_user_by_email(email: &str) -> Option<CurrentUser> {
