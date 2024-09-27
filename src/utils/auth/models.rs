@@ -10,6 +10,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
 
+#[derive(Clone)]
+pub struct UserContext {
+    pub id: Uuid,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,

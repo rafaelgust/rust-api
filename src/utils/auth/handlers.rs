@@ -10,7 +10,7 @@ use serde_json::json;
 use crate::{auth::{
     jwt::{decode_jwt, encode_jwt},
     models::{AuthError, CurrentUser, RefreshTokenData, SignInData, Tokens},
-}, utils::{args::sub_commands::user_commands::{CreateUser, UserName}, response::ApiResponse}};
+}, utils::{args::sub_commands::user_commands::{CreateUser, UserName}, cryptography::string_to_uuid, response::ApiResponse}};
 use crate::utils::{
     cryptography::{verify_password, hash_password},
     ops::user_ops::{self, UserResult},
@@ -20,6 +20,8 @@ use crate::utils::{
 use crate::utils::constants::UNEXPECTED_RESULT;
 
 use crate::auth::models::CreateUserData;
+
+use super::models::UserContext;
 
 pub async fn create_user(Json(new_user_data): Json<CreateUserData<'_>>) ->  impl IntoResponse {
 
@@ -100,103 +102,112 @@ pub async fn authorize(
         });
     }
 
-    let current_user = retrieve_user_by_email(&token_data.claims.email)
-        .ok_or_else(|| AuthError {
+    if !check_exist_username(&token_data.claims.username) {
+        return Err(AuthError {
             message: "User not found".to_string(),
             status_code: StatusCode::UNAUTHORIZED,
-        })?;
+        });
+    }
 
-    req.extensions_mut().insert(current_user);
+    let user = string_to_uuid(&token_data.claims.sub);
+
+    req.extensions_mut().insert(UserContext { id: user });
+
     Ok(next.run(req).await)
 }
 
 pub async fn sign_in(
     Json(user_data): Json<SignInData>,
-) -> Result<Json<Tokens>, AuthError> {
-    let user = retrieve_user_by_email(&user_data.email)
-        .ok_or_else(|| AuthError {
-            message: "Invalid credentials".to_string(),
-            status_code: StatusCode::UNAUTHORIZED,
-        })?;
+) -> impl IntoResponse {
+    let user = match retrieve_user_by_email(&user_data.email) {
+        Some(user) => user,
+        None => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error("Invalid credentials".to_string());
+            return (StatusCode::UNAUTHORIZED, Json(json_response)).into_response();
+        }
+    };
 
-    println!("{} request", &user_data.password);
-    println!("{} request", hash_password(&user_data.password).unwrap());
-    println!("{} base", &user.password_hash);
-
-    if !verify_password(&user_data.password, &user.password_hash)
-        .map_err(|_| AuthError {
-            message: "Internal server error".to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-        })? {
-        return Err(AuthError {
-            message: "Invalid credentials".to_string(),
-            status_code: StatusCode::UNAUTHORIZED,
-        });
+    if let Err(_) = verify_password(&user_data.password, &user.password_hash) {
+        let json_response: ApiResponse<String> = ApiResponse::new_error("Invalid credentials".to_string());
+        return (StatusCode::UNAUTHORIZED, Json(json_response)).into_response();
     }
 
-    let access_token = encode_jwt(user.id, user.email.clone(), user.username.clone(), 3600)
-        .map_err(|_| AuthError {
-            message: "Failed to generate access token".to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-        })?;
+    let access_token = match encode_jwt(user.id, user.email.clone(), user.username.clone(), 3600) {
+        Ok(token) => token,
+        Err(_) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate access token".to_string());
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(json_response)).into_response();
+        }
+    };
 
-    let refresh_token = encode_jwt(user.id, user.email, user.username, 86400 * 7)
-        .map_err(|_| AuthError {
-            message: "Failed to generate refresh token".to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-        })?;
+    let refresh_token = match encode_jwt(user.id, user.email, user.username, 86400 * 7) {
+        Ok(token) => token,
+        Err(_) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate refresh token".to_string());
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(json_response)).into_response();
+        }
+    };
 
-    Ok(Json(Tokens {
+    let tokens = Tokens {
         access_token,
         refresh_token,
-    }))
+    };
+    let json_response: ApiResponse<Tokens> = ApiResponse::new_success_data(tokens);
+    (StatusCode::OK, Json(json_response)).into_response()
 }
 
-pub async fn refresh_access_token(
-    Json(data): Json<RefreshTokenData>,
-) -> Result<Json<Tokens>, AuthError> {
-    let token_data = decode_jwt(&data.refresh_token)
-        .map_err(|_| AuthError {
-            message: "Invalid refresh token".to_string(),
-            status_code: StatusCode::UNAUTHORIZED,
-        })?;
+pub async fn refresh_access_token(Json(data): Json<RefreshTokenData>) -> impl IntoResponse {
+    let token_data = match decode_jwt(&data.refresh_token) {
+        Ok(data) => data,
+        Err(_) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error("Invalid refresh token".to_string());
+            return (StatusCode::UNAUTHORIZED, Json(json_response)).into_response();
+        }
+    };
 
     let now = Utc::now().timestamp() as usize;
     if now > token_data.claims.exp {
-        return Err(AuthError {
-            message: "Refresh token has expired".to_string(),
-            status_code: StatusCode::UNAUTHORIZED,
-        });
+        let json_response: ApiResponse<String> = ApiResponse::new_error("Refresh token has expired".to_string());
+        return (StatusCode::UNAUTHORIZED, Json(json_response)).into_response();
     }
 
-    let user = retrieve_user_by_email(&token_data.claims.email)
-        .ok_or_else(|| AuthError {
-            message: "User not found".to_string(),
-            status_code: StatusCode::UNAUTHORIZED,
-        })?;
+    let user = match retrieve_user_by_email(&token_data.claims.email) {
+        Some(user) => user,
+        None => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error("User not found".to_string());
+            return (StatusCode::UNAUTHORIZED, Json(json_response)).into_response();
+        }
+    };
 
-    let new_access_token = encode_jwt(user.id, user.email.clone(), user.username.clone(), 3600)
-        .map_err(|_| AuthError {
-            message: "Failed to generate access token".to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-        })?;
+    let new_access_token = match encode_jwt(user.id, user.email.clone(), user.username.clone(), 3600) {
+        Ok(token) => token,
+        Err(_) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate access token".to_string());
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(json_response)).into_response();
+        }
+    };
 
-    let new_refresh_token = encode_jwt(user.id, user.email, user.username, 86400 * 7)
-        .map_err(|_| AuthError {
-            message: "Failed to generate refresh token".to_string(),
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-        })?;
+    let new_refresh_token = match encode_jwt(user.id, user.email, user.username, 86400 * 7) {
+        Ok(token) => token,
+        Err(_) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate refresh token".to_string());
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(json_response)).into_response();
+        }
+    };
 
-    Ok(Json(Tokens {
+    let tokens = Tokens {
         access_token: new_access_token,
         refresh_token: new_refresh_token,
-    }))
+    };
+    let json_response: ApiResponse<Tokens> = ApiResponse::new_success_data(tokens);
+    (StatusCode::OK, Json(json_response)).into_response()
 }
 
-pub async fn sign_out(_req: Request) -> Result<StatusCode, AuthError> {
+pub async fn sign_out(_req: Request) -> impl IntoResponse {
     // Implement any necessary logic for signing out
     // For now, we're just returning OK
-    Ok(StatusCode::OK)
+    let json_response: ApiResponse<String> = ApiResponse::new_success_message("Successfully signed out".to_string());
+    (StatusCode::OK, Json(json_response)).into_response()
 }
 
 fn check_exist_username(username: &str) -> bool {
