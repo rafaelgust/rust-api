@@ -7,7 +7,7 @@ use axum::{
 };
 use serde_json::json;
 
-use crate::utils::{models::{brand::Brand, product::Product}, response::ApiResponse};
+use crate::utils::{models::{brand::{Brand, BrandProductResponse}, product::Product}, response::ApiResponse};
 use crate::utils::models::product::{ProductPaginationRequest, ProductResponse, DeleteProductRequest, InsertProductRequest, UpdateProductRequest};
 use crate::utils::ops::product_ops::{self, ProductResult};
 use crate::utils::args::commands::ProductCommand;
@@ -27,16 +27,19 @@ pub fn get_product_routes() -> Router {
 }
 
 pub fn create_product_response(product: Product, brand: Option<Brand>) -> ProductResponse {
+    let brand_product_response = brand.map(|b| BrandProductResponse {
+        name: b.name,
+        url_name: b.url_name,
+    });
+
     ProductResponse {
         id: uuid_to_base32hex(product.id),
         name: product.name,
         url_name: product.url_name,
         description: product.description,
         image: product.image,
-        brand: brand,
+        brand: brand_product_response,
         category_id: product.category_id,
-        created_at: product.created_at,
-        published: product.published,
     }
 }
 
