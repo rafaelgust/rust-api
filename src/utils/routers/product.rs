@@ -39,7 +39,6 @@ pub fn create_product_response(product: Product, brand: Option<Brand>) -> Produc
         description: product.description,
         image: product.image,
         brand: brand_product_response,
-        category_id: product.category_id,
     }
 }
 

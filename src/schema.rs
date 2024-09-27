@@ -75,6 +75,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    product_categories (product_id, category_id) {
+        product_id -> Uuid,
+        category_id -> Int4,
+    }
+}
+
+diesel::table! {
     products (id) {
         id -> Uuid,
         #[max_length = 256]
@@ -85,7 +92,6 @@ diesel::table! {
         #[max_length = 256]
         image -> Nullable<Varchar>,
         brand_id -> Nullable<Int4>,
-        category_id -> Nullable<Int4>,
         created_at -> Timestamp,
         published -> Bool,
     }
@@ -119,8 +125,9 @@ diesel::joinable!(comments -> users (user_id));
 diesel::joinable!(feedbacks -> products (product_id));
 diesel::joinable!(feedbacks -> users (user_id));
 diesel::joinable!(grades -> feedback_types (type_id));
+diesel::joinable!(product_categories -> categories (category_id));
+diesel::joinable!(product_categories -> products (product_id));
 diesel::joinable!(products -> brands (brand_id));
-diesel::joinable!(products -> categories (category_id));
 diesel::joinable!(users -> roles (role_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
@@ -131,6 +138,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     feedback_types,
     feedbacks,
     grades,
+    product_categories,
     products,
     roles,
     users,

@@ -64,7 +64,6 @@ fn create_product(product: CreateProductCommand, connection: &mut PgConnection) 
         description: &product.description,
         image: product.image.as_deref(),
         brand_id: product.brand_id,
-        category_id: product.category_id,
         published: true,
     };
 
@@ -86,7 +85,6 @@ fn update_product_by_id(product: UpdateProductCommand, connection: &mut PgConnec
         description: product.description.as_deref(),
         image: product.image.as_deref(),
         brand_id: product.brand_id,
-        category_id: product.category_id,
         published: product.published,
     };
 

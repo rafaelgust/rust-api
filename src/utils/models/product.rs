@@ -13,7 +13,6 @@ pub struct Product {
     pub description: String,
     pub image: Option<String>,
     pub brand_id: Option<i32>,
-    pub category_id: Option<i32>,
     pub created_at: NaiveDateTime,
     pub published: bool,
 }
@@ -27,7 +26,6 @@ pub struct NewProduct<'a> {
     pub description: &'a str,
     pub image: Option<&'a str>,
     pub brand_id: i32,
-    pub category_id: i32,
     pub published: bool,
 }
 
@@ -40,7 +38,6 @@ pub struct UpdateProduct<'a> {
     pub description: Option<&'a str>,
     pub image: Option<&'a str>,
     pub brand_id: Option<i32>,
-    pub category_id: Option<i32>,
     pub published: Option<bool>,
 }
 
@@ -55,7 +52,6 @@ pub struct ProductResponse {
     pub description: String,
     pub image: Option<String>,
     pub brand: Option<BrandProductResponse>,
-    pub category_id: Option<i32>,
 }
 
 // Request

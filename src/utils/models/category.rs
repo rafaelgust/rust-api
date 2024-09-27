@@ -32,3 +32,11 @@ pub struct UpdateCategory<'a> {
     pub description: Option<&'a str>,
     pub published: Option<&'a bool>,
 }
+
+// Response
+
+#[derive(Serialize)]
+pub struct CategoryProductResponse {
+    pub name: String,
+    pub url_name: String,
+}
