@@ -2,12 +2,15 @@ use diesel::prelude::*;
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
+use std::borrow::Cow;
 
 use crate::utils::models::brand::Brand;
+
 use super::{brand::BrandProductResponse, category::CategoryProductResponse};
 
-#[derive(Selectable)]
-#[derive(Queryable, Associations, Identifiable)]
+// Database models
+
+#[derive(Selectable, Queryable, Associations, Identifiable)]
 #[diesel(belongs_to(Brand))]
 #[diesel(table_name = crate::schema::products)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -46,8 +49,7 @@ pub struct UpdateProduct<'a> {
     pub published: Option<bool>,
 }
 
-
-// Response
+// API Response models
 
 #[derive(Serialize)]
 pub struct ProductResponse {
@@ -60,8 +62,7 @@ pub struct ProductResponse {
     pub categories: Option<Vec<CategoryProductResponse>>
 }
 
-// Request
-use std::borrow::Cow;
+// API Request models
 
 #[derive(Deserialize)]
 pub struct InsertProductRequest<'a> {

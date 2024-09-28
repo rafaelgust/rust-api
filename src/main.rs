@@ -4,6 +4,7 @@ use std::{env, net::{IpAddr, SocketAddr}, str::FromStr};
 use axum::{http::{self, HeaderValue, Method, StatusCode}, middleware, routing::{get, post}, Router};
 use axum::response::Response;
 
+use log::info;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 use dotenv::dotenv;
@@ -11,10 +12,10 @@ use serde_json::json;
 use tokio::net::TcpListener;
 
 use utils::auth::handlers::authorize;
-use utils::routers::brand::get_brand_routes;
 use utils::routers::category::get_category_routes;
 use utils::routers::comment::get_comment_routes;
-use utils::routers::product::get_product_routes;
+use utils::routers::brand::BrandRoutes;
+use utils::routers::product::ProductRoutes;
 
 use utils::auth;
 
@@ -44,10 +45,10 @@ pub fn create_router() -> Router {
         .route("/signin", post(auth::handlers::sign_in))
         .route("/refresh", post(auth::handlers::refresh_access_token));
 
-    let brand_routes = get_brand_routes();
     let category_routes = get_category_routes();
     let comment_routes = get_comment_routes();
-    let product_routes = get_product_routes();
+    let brand_routes = BrandRoutes::get_routes();
+    let product_routes = ProductRoutes::get_routes();
 
     Router::new()
         .merge(public_routes)
@@ -61,6 +62,9 @@ pub fn create_router() -> Router {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+
+    env::set_var("RUST_LOG", "info");
+    env_logger::init();
 
     // Configurar o CORS
     let cors = CorsLayer::new()

@@ -1,6 +1,10 @@
+use std::borrow::Cow;
+
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
+// Database models
 
 #[derive(Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::brands)]
@@ -33,10 +37,36 @@ pub struct UpdateBrand<'a> {
     pub published: Option<&'a bool>,
 }
 
-// Response
+// API Response models
+
+#[derive(Serialize)]
+pub struct BrandResponse {
+    pub id: i32,
+    pub name: String,
+    pub url_name: String,
+    pub description: String,
+}
 
 #[derive(Serialize)]
 pub struct BrandProductResponse {
     pub name: String,
     pub url_name: String,
+}
+
+// API Request models
+
+#[derive(Deserialize)]
+pub struct InsertBrandRequest<'a> {
+    pub name: Cow<'a, str>,
+    pub url_name: Cow<'a, str>,
+    pub description: Cow<'a, str>,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateBrandRequest<'a> {
+    pub id: i32,
+    pub name: Option<Cow<'a, str>>,
+    pub url_name: Option<Cow<'a, str>>,
+    pub description: Option<Cow<'a, str>>,
+    pub published: Option<bool>,
 }

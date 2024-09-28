@@ -32,10 +32,10 @@ pub struct CreateBrand {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct UpdateBrand {
     pub id: i32,
-    pub name: String,
-    pub url_name: String,
-    pub description: String,
-    pub published: bool,
+    pub name: Option<String>,
+    pub url_name: Option<String>,
+    pub description: Option<String>,
+    pub published: Option<bool>,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]

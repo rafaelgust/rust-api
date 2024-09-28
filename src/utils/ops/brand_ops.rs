@@ -1,7 +1,7 @@
 use crate::utils::db::establish_connection;
 use diesel::prelude::*;
 use diesel::result::Error;
-use log::info;
+use log::{error, info, warn};
 
 use diesel::dsl::exists;
 use diesel::select;
@@ -35,7 +35,7 @@ pub fn handle_brand_command(brand: BrandCommand) -> Result<BrandResult, Error> {
             create_brand(brand, connection).map(BrandResult::Message)
         }
         BrandSubcommand::Update(brand) => {
-            update_brand_by_id(brand, connection).map(BrandResult::Brand)
+            update_brand_by_id(brand, connection).map(BrandResult::Message)
         }
         BrandSubcommand::Delete(delete_entity) => {
             delete_brand_by_id(delete_entity, connection).map(BrandResult::Message)
@@ -86,31 +86,40 @@ fn create_brand(brand: CreateBrandCommand, connection: &mut PgConnection) -> Res
                         .optional();
 
     match result {
-        Ok(brand) => Ok(format!("Creating brand: {:?}", brand)),
+        Ok(_) => Ok(format!("Brand was successfully created")),
         Err(err) => Err(Error::QueryBuilderError(format!("Creating brand error: {:?}",err).into()))
     }
 }
 
-fn update_brand_by_id(brand: UpdateBrandCommand, connection: &mut PgConnection) -> Result<Option<Brand>, Error> {
+fn update_brand_by_id(brand: UpdateBrandCommand, connection: &mut PgConnection) -> Result<String, Error> {
     info!("Updating brand: {:?}", brand);
 
     let update_brand = UpdateBrand {
         id: &brand.id,
-        name: Some(&brand.name),
-        url_name: Some(&brand.url_name), 
-        description: Some(&brand.description),
-        published: Some(&brand.published),
+        name: brand.name.as_deref(),
+        url_name: brand.url_name.as_deref(), 
+        description: brand.description.as_deref(),
+        published: brand.published.as_ref(),
     };
 
-    let result = diesel::update(brands.find(brand.id))
+    match diesel::update(brands.find(brand.id))
         .set(update_brand)
         .returning(Brand::as_returning())
         .get_result(connection)
-        .optional();
-
-    match result {
-        Ok(brand) => Ok(brand),
-        Err(err) => Err(err),
+        .optional()
+    {
+        Ok(Some(brand)) => {
+            info!("Successfully updated brand: {:?}", brand.id);
+            Ok(format!("Successfully updated brand: {:?}", brand.id))
+        },
+        Ok(None) => {
+            warn!("No brand found with the given ID: {}", brand.id);
+            Ok(format!("No brand found with the given ID: {}", brand.id))
+        },
+        Err(err) => {
+            error!("Error updating brand: {:?}", err);
+            Err(err)
+        }
     }
 }
 
@@ -136,7 +145,7 @@ fn brand_pagination(pagination: BrandPaginationCommand, connection: &mut PgConne
 
     let mut query = brands
         .filter(published.eq(true))
-        .into_boxed(); // Converts to a boxed query for conditional appending
+        .into_boxed();
 
     if let Some(last_id_value) = last_id {
         if order_by_desc {
