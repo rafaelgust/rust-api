@@ -69,8 +69,7 @@ pub struct InsertProductRequest<'a> {
     pub url_name: Cow<'a, str>,
     pub description: Cow<'a, str>,
     pub image: Option<Cow<'a, str>>,
-    pub brand_id: i32,
-    pub category_id: i32
+    pub brand_id: i32
 }
 
 #[derive(Deserialize)]
@@ -81,7 +80,6 @@ pub struct UpdateProductRequest<'a> {
     pub description: Option<Cow<'a, str>>,
     pub image: Option<Cow<'a, str>>,
     pub brand_id: Option<i32>,
-    pub category_id: Option<i32>,
     pub published: Option<bool>
 }
 

@@ -30,7 +30,6 @@ pub struct CreateProduct {
     pub description: String,
     pub image: Option<String>,
     pub brand_id: i32,
-    pub category_id: i32,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
@@ -41,7 +40,6 @@ pub struct UpdateProduct {
     pub description: Option<String>,
     pub image: Option<String>,
     pub brand_id: Option<i32>,
-    pub category_id: Option<i32>,
     pub published: Option<bool>,
 }
 

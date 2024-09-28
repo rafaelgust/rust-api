@@ -164,7 +164,6 @@ async fn new_product(Json(new_product): Json<InsertProductRequest<'_>>) -> impl 
         description: new_product.description.trim().to_string(),
         image: Some(new_product.image.expect("REASON").to_string()),
         brand_id: new_product.brand_id,
-        category_id: new_product.category_id,
     };
 
     let result = product_ops::handle_product_command(ProductCommand {
@@ -203,7 +202,6 @@ async fn update_product(Json(product): Json<UpdateProductRequest<'_>>) -> impl I
         description: product.description.as_deref().map(String::from),
         image: Some(product.image.expect("REASON").to_string()),
         brand_id: product.brand_id,
-        category_id: product.category_id,
         published: product.published,
     };
 
