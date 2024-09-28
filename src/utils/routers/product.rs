@@ -7,7 +7,7 @@ use axum::{
 };
 use serde_json::json;
 
-use crate::utils::{models::{brand::{Brand, BrandProductResponse}, product::Product}, response::ApiResponse};
+use crate::utils::{models::{brand::{Brand, BrandProductResponse}, category::{Category, CategoryProductResponse}, product::Product}, response::ApiResponse};
 use crate::utils::models::product::{ProductPaginationRequest, ProductResponse, DeleteProductRequest, InsertProductRequest, UpdateProductRequest};
 use crate::utils::ops::product_ops::{self, ProductResult};
 use crate::utils::args::commands::ProductCommand;
@@ -26,11 +26,16 @@ pub fn get_product_routes() -> Router {
         .route("/product", delete(delete_product))
 }
 
-pub fn create_product_response(product: Product, brand: Option<Brand>) -> ProductResponse {
+pub fn create_product_response(product: Product, brand: Option<Brand>, categories: Vec<Category>) -> ProductResponse {
     let brand_product_response = brand.map(|b| BrandProductResponse {
         name: b.name,
         url_name: b.url_name,
     });
+
+    let category_product_responses = categories.into_iter().map(|c| CategoryProductResponse {
+        name: c.name,
+        url_name: c.url_name,
+    }).collect();
 
     ProductResponse {
         id: uuid_to_base32hex(product.id),
@@ -39,6 +44,7 @@ pub fn create_product_response(product: Product, brand: Option<Brand>) -> Produc
         description: product.description,
         image: product.image,
         brand: brand_product_response,
+        categories: Some(category_product_responses),
     }
 }
 
@@ -50,8 +56,8 @@ async fn get_product_by_url_name(Path(url_name): Path<String>) -> impl IntoRespo
     });
 
     match result {
-        Ok(ProductResult::Product(Some((product, brand)))) => {
-            let response = create_product_response(product, brand);
+        Ok(ProductResult::Product(Some((product, brand, categories)))) => {
+            let response = create_product_response(product, brand, categories);
             (StatusCode::OK, Json(response)).into_response()
         },
         Ok(_) => (StatusCode::NOT_FOUND, Json(json!({"error": PRODUCT_NOT_FOUND}))).into_response(),
@@ -75,8 +81,8 @@ async fn get_product_by_id(Path(id): Path<String>) -> impl IntoResponse {
     });
 
     match result {
-        Ok(ProductResult::Product(Some((product, brand)))) => {
-            let response = create_product_response(product, brand);
+        Ok(ProductResult::Product(Some((product, brand, categories)))) => {
+            let response = create_product_response(product, brand, categories);
             (StatusCode::OK, Json(response)).into_response()
         },
         Ok(_) => (StatusCode::NOT_FOUND, Json(json!({"error": PRODUCT_NOT_FOUND}))).into_response(),
@@ -93,7 +99,7 @@ async fn get_all_products() -> impl IntoResponse {
         Ok(ProductResult::Products(products)) => {
             let products_responses: Vec<ProductResponse> = products
                 .into_iter()
-                .filter_map(|opt_product_brand| opt_product_brand.map(|(product, brand)| create_product_response(product, brand)))
+                .filter_map(|opt_product_brand| opt_product_brand.map(|(product, brand, categories)| create_product_response(product, brand, categories)))
                 .collect();
 
             let json_response: ApiResponse<Vec<ProductResponse>> = ApiResponse::new_success_data(products_responses);
@@ -134,7 +140,7 @@ async fn get_products(Json(products): Json<ProductPaginationRequest<'_>>) -> imp
         Ok(ProductResult::Products(products)) => {
             let products_responses: Vec<ProductResponse> = products
                 .into_iter()
-                .filter_map(|opt_product_brand| opt_product_brand.map(|(product, brand)| create_product_response(product, brand)))
+                .filter_map(|opt_product_brand| opt_product_brand.map(|(product, brand, categories)| create_product_response(product, brand, categories)))
                 .collect();
 
             let json_response: ApiResponse<Vec<ProductResponse>> = ApiResponse::new_success_data(products_responses);
@@ -166,8 +172,8 @@ async fn new_product(Json(new_product): Json<InsertProductRequest<'_>>) -> impl 
     });
 
     match result {
-        Ok(ProductResult::Message(_)) => {
-            let json_response: ApiResponse<String> = ApiResponse::new_success_message(format!("Product '{}' was created", new_product.name.trim()));
+        Ok(ProductResult::Message(result)) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_success_message(result);
             (StatusCode::CREATED, Json(json_response)).into_response()
         },
         Ok(_) => {
@@ -206,9 +212,9 @@ async fn update_product(Json(product): Json<UpdateProductRequest<'_>>) -> impl I
     });
 
     match result {
-        Ok(ProductResult::Product(Some((product, brand)))) => {
-            let response = create_product_response(product, brand);
-            (StatusCode::OK, Json(response)).into_response()
+        Ok(ProductResult::Message(result)) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_success_message(result);
+            (StatusCode::CREATED, Json(json_response)).into_response()
         },
         Ok(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": UNEXPECTED_RESULT}))).into_response(),
         Err(err) => (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": err.to_string()}))).into_response(),

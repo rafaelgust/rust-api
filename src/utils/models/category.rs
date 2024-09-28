@@ -2,7 +2,8 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::Serialize;
 
-#[derive(Queryable, Selectable, Serialize)]
+#[derive(Selectable, Serialize)]
+#[derive(Queryable, Identifiable)]
 #[diesel(table_name = crate::schema::categories)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Category {

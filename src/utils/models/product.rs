@@ -3,7 +3,12 @@ use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
-#[derive(Queryable, Selectable)]
+use crate::utils::models::brand::Brand;
+use super::{brand::BrandProductResponse, category::CategoryProductResponse};
+
+#[derive(Selectable)]
+#[derive(Queryable, Associations, Identifiable)]
+#[diesel(belongs_to(Brand))]
 #[diesel(table_name = crate::schema::products)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Product {
@@ -41,8 +46,8 @@ pub struct UpdateProduct<'a> {
     pub published: Option<bool>,
 }
 
+
 // Response
-use super::brand::BrandProductResponse;
 
 #[derive(Serialize)]
 pub struct ProductResponse {
@@ -52,6 +57,7 @@ pub struct ProductResponse {
     pub description: String,
     pub image: Option<String>,
     pub brand: Option<BrandProductResponse>,
+    pub categories: Option<Vec<CategoryProductResponse>>
 }
 
 // Request

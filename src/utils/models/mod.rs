@@ -6,3 +6,4 @@ pub mod feed_back;
 pub mod grade;
 pub mod product;
 pub mod user;
+pub mod product_categories;
