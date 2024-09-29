@@ -46,7 +46,6 @@ pub struct CommentResponse {
     pub id: String,
     pub text: String,
     pub created_at: NaiveDateTime,
-    pub product_id: String,
     pub user_id: String
 }
 
