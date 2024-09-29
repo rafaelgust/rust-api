@@ -126,8 +126,8 @@ fn comment_pagination(pagination: CommentPaginationCommand, connection: &mut PgC
 
     let mut query = comments
         .filter(published.eq(true))
-        .into_boxed(); // Converts to a boxed query for conditional appending
-
+        .into_boxed();
+    
     if let Some(last_id_value) = last_id {
         if order_by_desc {
             query = query.filter(id.lt(last_id_value));

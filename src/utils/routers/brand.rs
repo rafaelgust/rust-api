@@ -1,5 +1,5 @@
 use axum::{
-    extract::Path, http::{status, StatusCode}, response::Json, routing::{delete, get, post, put}, Router
+    extract::Path, http::StatusCode, response::Json, routing::{delete, get, post, put}, Router
 };
 use serde_json::json;
 

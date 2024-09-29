@@ -4,7 +4,6 @@ use std::{env, net::{IpAddr, SocketAddr}, str::FromStr};
 use axum::{http::{self, HeaderValue, Method, StatusCode}, middleware, routing::{get, post}, Router};
 use axum::response::Response;
 
-use log::info;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 use dotenv::dotenv;
