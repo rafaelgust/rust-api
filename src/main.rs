@@ -1,62 +1,17 @@
 
 use std::{env, net::{IpAddr, SocketAddr}, str::FromStr};
 
-use axum::{http::{self, HeaderValue, Method, StatusCode}, middleware, routing::{get, post}, Router};
-use axum::response::Response;
+use axum::{http::{self, HeaderValue, Method}, Router};
 
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 use dotenv::dotenv;
-use serde_json::json;
 use tokio::net::TcpListener;
 
-use utils::auth::handlers::authorize;
-use utils::routers::category::get_category_routes;
-use utils::routers::comment::get_comment_routes;
-use utils::routers::brand::BrandRoutes;
-use utils::routers::product::ProductRoutes;
-
-use utils::auth;
+use utils::{auth, routers::routes::create_router};
 
 mod utils;
 mod schema;
-
-async fn root() -> Response<String> {
-    Response::builder()
-        .status(StatusCode::OK)
-        .header("Content-Type", "application/json")
-        .body(json!({
-            "success": true,
-            "data": "Welcome to the API"
-        }).to_string())
-        .unwrap()
-}
-
-pub fn create_router() -> Router {
-    let protected_routes = Router::new()
-        .route("/protected", get(auth::services::hello))
-        .route("/signup", get(auth::handlers::sign_out))
-        .layer(middleware::from_fn(authorize));
-
-    let public_routes = Router::new()
-        .route("/", get(root))
-        .route("/create", post(auth::handlers::create_user))
-        .route("/signin", post(auth::handlers::sign_in))
-        .route("/refresh", post(auth::handlers::refresh_access_token));
-
-    let category_routes = get_category_routes();
-    let comment_routes = get_comment_routes();
-    let brand_routes = BrandRoutes::get_routes();
-    let product_routes = ProductRoutes::get_routes();
-
-    Router::new()
-        .merge(public_routes)
-        .merge(brand_routes)
-        .merge(category_routes)
-        .merge(comment_routes)
-        .merge(product_routes)
-        .merge(protected_routes)
-}
 
 #[tokio::main]
 async fn main() {

@@ -1,4 +1,6 @@
-pub mod brand;
-pub mod category;
-pub mod comment;
-pub mod product;
+mod brand;
+mod category;
+mod comment;
+mod product;
+
+pub mod routes;
