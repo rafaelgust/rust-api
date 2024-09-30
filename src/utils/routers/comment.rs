@@ -7,6 +7,11 @@ use axum::{
 };
 use serde_json::json;
 
+use crate::utils::{
+    response::BaseResponse,
+    utf8_json::Utf8Json,
+};
+
 use crate::utils::{models::comment::Comment, response::ApiResponse};
 use crate::utils::models::comment::{CommentPaginationRequest, CommentResponse, DeleteCommentRequest, InsertCommentRequest, UpdateCommentRequest};
 use crate::utils::ops::comment_ops::{self, CommentResult};
@@ -16,8 +21,6 @@ use crate::utils::args::sub_commands::comment_commands::{
 };
 use crate::utils::constants::{COMMENT_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
 use crate::utils::cryptography::{base32hex_to_uuid, uuid_to_base32hex};
-
-type BaseResponse = (StatusCode, Json<serde_json::Value>);
 
 pub struct CommentRoutes;
 
@@ -126,17 +129,17 @@ impl CommentRoutes {
 
     fn handle_decode_error(err: String) -> BaseResponse {
         eprintln!("Error decoding base32hex to UUID: {}", err);
-        (StatusCode::NOT_FOUND, Json(json!({"error": FETCH_ERROR})))
+        (StatusCode::NOT_FOUND, Utf8Json(json!({"error": FETCH_ERROR})))
     }
 
     fn handle_comment_result(result: Result<CommentResult, diesel::result::Error>) -> BaseResponse {
         match result {
             Ok(CommentResult::Comment(Some(comment))) => {
                 let response = Self::create_comment_response(comment);
-                (StatusCode::OK, Json(json!(response)))
+                (StatusCode::OK, Utf8Json(json!(response)))
             },
-            Ok(_) => (StatusCode::NOT_FOUND, Json(json!({"error": COMMENT_NOT_FOUND}))),
-            Err(_) => (StatusCode::NOT_FOUND, Json(json!({"error": FETCH_ERROR}))),
+            Ok(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": COMMENT_NOT_FOUND}))),
+            Err(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": FETCH_ERROR}))),
         }
     }
 
@@ -149,15 +152,15 @@ impl CommentRoutes {
                     .collect();
 
                 let json_response = ApiResponse::new_success_data(comments_response);
-                (StatusCode::OK, Json(json!(json_response)))
+                (StatusCode::OK, Utf8Json(json!(json_response)))
             },
             Ok(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(COMMENT_NOT_FOUND.to_string());
-                (StatusCode::NO_CONTENT, Json(json!(json_response)))
+                (StatusCode::NO_CONTENT, Utf8Json(json!(json_response)))
             },
             Err(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(FETCH_ERROR.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!(json_response)))
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
             },
         }
     }
@@ -166,15 +169,15 @@ impl CommentRoutes {
         match result {
             Ok(CommentResult::Message(result)) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_success_message(result);
-                (status_success, Json(json!(json_response)))
+                (status_success, Utf8Json(json!(json_response)))
             },
             Ok(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(UNEXPECTED_RESULT.to_string());
-                (status_fail, Json(json!(json_response)))
+                (status_fail, Utf8Json(json!(json_response)))
             },
             Err(err) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(err.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!(json_response)))
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
             },
         }
     }

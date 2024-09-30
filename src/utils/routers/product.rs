@@ -1,11 +1,12 @@
 use axum::{
-    routing::{get, post, put, delete},
-    http::StatusCode,
-    response::Json,
-    Router,
-    extract::Path,
+    extract::Path, http::StatusCode, response::Json, routing::{delete, get, post, put}, Router
 };
 use serde_json::json;
+
+use crate::utils::{
+    response::BaseResponse,
+    utf8_json::Utf8Json,
+};
 
 use crate::utils::{
     models::{
@@ -22,8 +23,6 @@ use crate::utils::{
     constants::{PRODUCT_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT},
     cryptography::{base32hex_to_uuid, uuid_to_base32hex}
 };
-
-type BaseResponse = (StatusCode, Json<serde_json::Value>);
 
 pub struct ProductRoutes;
 
@@ -169,17 +168,18 @@ impl ProductRoutes {
 
     fn handle_decode_error(err: String) -> BaseResponse {
         eprintln!("Error decoding base32hex to UUID: {}", err);
-        (StatusCode::NOT_FOUND, Json(json!({"error": FETCH_ERROR})))
+        (StatusCode::NOT_FOUND, Utf8Json(json!({"error": FETCH_ERROR})))
     }
 
     fn handle_product_result(result: Result<ProductResult, diesel::result::Error>) -> BaseResponse {
         match result {
             Ok(ProductResult::Product(Some((product, brand, categories)))) => {
-                let response = Self::create_product_response(product, brand, categories);
-                (StatusCode::OK, Json(json!(response)))
+                let product_response = Self::create_product_response(product, brand, categories);
+                let json_response = ApiResponse::new_success_data(product_response);
+                (StatusCode::OK, Utf8Json(json!(json_response)))
             },
-            Ok(_) => (StatusCode::NOT_FOUND, Json(json!({"error": PRODUCT_NOT_FOUND}))),
-            Err(_) => (StatusCode::NOT_FOUND, Json(json!({"error": FETCH_ERROR}))),
+            Ok(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": PRODUCT_NOT_FOUND}))),
+            Err(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": FETCH_ERROR}))),
         }
     }
 
@@ -192,15 +192,15 @@ impl ProductRoutes {
                     .collect();
 
                 let json_response = ApiResponse::new_success_data(products_responses);
-                (StatusCode::OK, Json(json!(json_response)))
+                (StatusCode::OK, Utf8Json(json!(json_response)))
             },
             Ok(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(PRODUCT_NOT_FOUND.to_string());
-                (StatusCode::NO_CONTENT, Json(json!(json_response)))
+                (StatusCode::NO_CONTENT, Utf8Json(json!(json_response)))
             },
             Err(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(FETCH_ERROR.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!(json_response)))
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
             },
         }
     }
@@ -209,15 +209,15 @@ impl ProductRoutes {
         match result {
             Ok(ProductResult::Message(result)) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_success_message(result);
-                (status_success, Json(json!(json_response)))
+                (status_success, Utf8Json(json!(json_response)))
             },
             Ok(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(UNEXPECTED_RESULT.to_string());
-                (status_fail, Json(json!(json_response)))
+                (status_fail, Utf8Json(json!(json_response)))
             },
             Err(err) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(err.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!(json_response)))
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
             },
         }
     }

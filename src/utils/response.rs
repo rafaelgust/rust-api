@@ -1,5 +1,11 @@
 use serde::Serialize;
 
+use axum::http::StatusCode;
+use serde_json::Value;
+use crate::utils::utf8_json::Utf8Json;
+
+pub type BaseResponse = (StatusCode, Utf8Json<Value>);
+
 #[derive(Serialize)]
 pub struct ApiResponse<T> {
     status: String,

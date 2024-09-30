@@ -4,13 +4,16 @@ use axum::{
 use serde_json::json;
 
 use crate::utils::{
+    response::BaseResponse,
+    utf8_json::Utf8Json,
+};
+
+use crate::utils::{
     args::{
         commands::BrandCommand,
         sub_commands::brand_commands::{BrandPagination, BrandSubcommand, CreateBrand, DeleteBrand, GetBrandByUrlName, UpdateBrand as UpdateBrandCommand}
     }, constants::{BRAND_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT}, models::brand::{InsertBrandRequest, UpdateBrandRequest}, ops::brand_ops::{self, BrandResult}, response::ApiResponse
 };
-
-type BaseResponse = (StatusCode, Json<serde_json::Value>);
 
 pub struct BrandRoutes;
 
@@ -96,9 +99,9 @@ impl BrandRoutes {
 
     fn handle_brand_result(result: Result<BrandResult, diesel::result::Error>) -> BaseResponse {
         match result {
-            Ok(BrandResult::Brand(Some(brand))) => (StatusCode::OK, Json(json!(brand))),
-            Ok(_) => (StatusCode::NOT_FOUND, Json(json!({"error": BRAND_NOT_FOUND}))),
-            Err(_) => (StatusCode::NOT_FOUND, Json(json!({"error": FETCH_ERROR}))),
+            Ok(BrandResult::Brand(Some(brand))) => (StatusCode::OK, Utf8Json(json!(brand))),
+            Ok(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": BRAND_NOT_FOUND}))),
+            Err(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": FETCH_ERROR}))),
         }
     }
 
@@ -106,15 +109,15 @@ impl BrandRoutes {
         match result {
             Ok(BrandResult::Brands(brands)) => {
                 let json_response = ApiResponse::new_success_data(brands);
-                (StatusCode::OK, Json(json!(json_response)))
+                (StatusCode::OK, Utf8Json(json!(json_response)))
             },
             Ok(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(BRAND_NOT_FOUND.to_string());
-                (StatusCode::NOT_FOUND, Json(json!(json_response)))
+                (StatusCode::NOT_FOUND, Utf8Json(json!(json_response)))
             },
             Err(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(FETCH_ERROR.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!(json_response)))
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
             },
         }
     }
@@ -123,15 +126,15 @@ impl BrandRoutes {
         match result {
             Ok(BrandResult::Message(result)) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_success_message(result);
-                (status_success, Json(json!(json_response)))
+                (status_success, Utf8Json(json!(json_response)))
             },
             Ok(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(UNEXPECTED_RESULT.to_string());
-                (status_fail, Json(json!(json_response)))
+                (status_fail, Utf8Json(json!(json_response)))
             },
             Err(err) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(err.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!(json_response)))
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
             },
         }
     }

@@ -7,14 +7,17 @@ use axum::{
 };
 use serde_json::json;
 
+use crate::utils::{
+    response::BaseResponse,
+    utf8_json::Utf8Json,
+};
+
 use crate::utils::{models::category::CategoryProductResponse, response::ApiResponse};
 use crate::utils::models::category::Category;
 use crate::utils::ops::category_ops::{self, CategoryResult};
 use crate::utils::args::commands::CategoryCommand;
 use crate::utils::args::sub_commands::category_commands::{CategorySubcommand, CreateCategory, DeleteCategory, GetCategoryByUrlName, UpdateCategory as UpdateCategoryCommand};
 use crate::utils::constants::{CATEGORY_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
-
-type BaseResponse = (StatusCode, Json<serde_json::Value>);
 
 pub struct CategoryRoutes;
 
@@ -100,10 +103,10 @@ impl CategoryRoutes {
         match result {
             Ok(CategoryResult::Category(Some(category))) => {
                 let response = Self::create_category_product_response(category);
-                (StatusCode::OK, Json(json!(response)))
+                (StatusCode::OK, Utf8Json(json!(response)))
             },
-            Ok(_) => (StatusCode::NOT_FOUND, Json(json!({"error": CATEGORY_NOT_FOUND}))),
-            Err(_) => (StatusCode::NOT_FOUND, Json(json!({"error": FETCH_ERROR}))),
+            Ok(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": CATEGORY_NOT_FOUND}))),
+            Err(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": FETCH_ERROR}))),
         }
     }
 
@@ -116,15 +119,15 @@ impl CategoryRoutes {
                     .collect();
 
                 let json_response = ApiResponse::new_success_data(categories_responses);
-                (StatusCode::OK, Json(json!(json_response)))
+                (StatusCode::OK, Utf8Json(json!(json_response)))
             },
             Ok(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(CATEGORY_NOT_FOUND.to_string());
-                (StatusCode::NO_CONTENT, Json(json!(json_response)))
+                (StatusCode::NO_CONTENT, Utf8Json(json!(json_response)))
             },
             Err(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(FETCH_ERROR.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!(json_response)))
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
             },
         }
     }
@@ -133,15 +136,15 @@ impl CategoryRoutes {
         match result {
             Ok(CategoryResult::Message(result)) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_success_message(result);
-                (status_success, Json(json!(json_response)))
+                (status_success, Utf8Json(json!(json_response)))
             },
             Ok(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(UNEXPECTED_RESULT.to_string());
-                (status_fail, Json(json!(json_response)))
+                (status_fail, Utf8Json(json!(json_response)))
             },
             Err(err) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(err.to_string());
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(json!(json_response)))
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
             },
         }
     }
