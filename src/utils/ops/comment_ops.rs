@@ -10,7 +10,8 @@ use crate::schema::comments::dsl::*;
 
 use crate::utils::args::commands::CommentCommand;
 use crate::utils::args::sub_commands::comment_commands::{CommentSubcommand, 
-    GetCommentByProductId as GetCommentByProductIdCommand, 
+    GetCommentByProductId as GetCommentByProductIdCommand,
+    GetCommentById as GetCommentByIdCommand,
     CreateComment as CreateCommentCommand, 
     UpdateComment as UpdateCommentCommand, 
     DeleteComment as DeleteCommentCommand,
@@ -28,7 +29,10 @@ pub fn handle_comment_command(comment: CommentCommand) -> Result<CommentResult, 
     let command = comment.command;
     match command {
         CommentSubcommand::GetCommentByProductId(comment) => {
-            show_comment_by_product_id(comment, connection).map(CommentResult::Comment)
+            show_comments_by_product_id(comment, connection).map(CommentResult::Comments)
+        }
+        CommentSubcommand::GetCommentById(comment) => {
+            show_comment_by_id(comment, connection).map(CommentResult::Comment)
         }
         CommentSubcommand::Create(comment) => {
             create_comment(comment, connection).map(CommentResult::Message)
@@ -48,16 +52,33 @@ pub fn handle_comment_command(comment: CommentCommand) -> Result<CommentResult, 
     }
 }
 
-fn show_comment_by_product_id(comment: GetCommentByProductIdCommand, connection: &mut PgConnection) -> Result<Option<Comment>, Error> {
+fn show_comments_by_product_id(comment: GetCommentByProductIdCommand, connection: &mut PgConnection) -> Result<Vec<Comment>, Error> {
     info!("Showing comment: {:?}", comment);
     
-    let comment_result = comments
-        .filter(product_id.eq(comment.product_id).and(published.eq(true)))
-        .select(Comment::as_select())
-        .first(connection)
+    //select no comentario pelo id retornado apenas ele
+
+    let result = comments
+        .filter(product_id.eq(comment.product_id))
+        .filter(published.eq(true))
+        .order(id.desc())
+        .load::<Comment>(connection);
+
+    result
+}
+
+fn show_comment_by_id(comment: GetCommentByIdCommand, connection: &mut PgConnection) -> Result<Option<Comment>, Error> {
+    info!("Showing comment: {:?}", comment);
+
+    let result = comments
+        .filter(id.eq(comment.id))
+        .filter(published.eq(true))
+        .first::<Comment>(connection)
         .optional();
 
-    comment_result
+    match result {
+        Ok(comment) => Ok(comment),
+        Err(err) => Err(err),
+    }
 }
 
 fn create_comment(comment: CreateCommentCommand, connection: &mut PgConnection) -> Result<String, Error> {
@@ -73,14 +94,18 @@ fn create_comment(comment: CreateCommentCommand, connection: &mut PgConnection) 
         published: true,
     };
 
-    let result = diesel::insert_into(comments)
-                        .values(new_comment)
-                        .execute(connection)
-                        .optional();
-
-    match result {
-        Ok(comment) => Ok(format!("Creating comment: {:?}", comment)),
-        Err(err) => Err(Error::QueryBuilderError(format!("Creating comment error: {:?}",err).into()))
+    match diesel::insert_into(comments)
+        .values(&new_comment)
+        .execute(connection)
+    {
+        Ok(_) => {
+            let success_message = format!("Comment created successfully!");
+            Ok(success_message)
+        }
+        Err(e) => {
+            let error_message = format!("Error creating comment: {}", e);
+            Err(Error::QueryBuilderError(error_message.into()))
+        }
     }
 }
 

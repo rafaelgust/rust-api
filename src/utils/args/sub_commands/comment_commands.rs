@@ -7,6 +7,8 @@ use uuid::Uuid;
 pub enum CommentSubcommand {
     GetCommentByProductId(GetCommentByProductId),
 
+    GetCommentById(GetCommentById),
+
     Create(CreateComment),
 
     Update(UpdateComment),
@@ -21,6 +23,11 @@ pub enum CommentSubcommand {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct GetCommentByProductId {
     pub product_id: Uuid,
+}
+
+#[derive(Debug, Args, Deserialize, Serialize)]
+pub struct GetCommentById {
+    pub id: Uuid,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]

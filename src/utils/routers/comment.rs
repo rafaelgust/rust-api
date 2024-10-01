@@ -8,8 +8,7 @@ use axum::{
 use serde_json::json;
 
 use crate::utils::{
-    response::BaseResponse,
-    utf8_json::Utf8Json,
+    args::sub_commands::comment_commands::GetCommentById, response::BaseResponse, utf8_json::Utf8Json
 };
 
 use crate::utils::{models::comment::Comment, response::ApiResponse};
@@ -28,7 +27,8 @@ impl CommentRoutes {
 
     pub fn get_routes() -> Router {
         Router::new()
-            .route("/comment/:comment_id", get(Self::get_comment_by_comment_id))
+            .route("/comment/id/:comment_id", get(Self::get_comment_by_id))
+            .route("/comment/:product_id", get(Self::get_comments_by_comment_id))
             .route("/comment", get(Self::get_all_comments))
             .route("/comment/list", post(Self::get_comments))
             .route("/comment", post(Self::new_comment))
@@ -36,8 +36,8 @@ impl CommentRoutes {
             .route("/comment", delete(Self::delete_comment))
     }
 
-    async fn get_comment_by_comment_id(Path(comment_id): Path<String>) -> BaseResponse {
-        let product_id_uuid = match Self::decode_base32hex(&comment_id) {
+    async fn get_comments_by_comment_id(Path(product_id): Path<String>) -> BaseResponse {
+        let product_id_uuid = match Self::decode_base32hex(&product_id) {
             Ok(uuid) => uuid,
             Err(err) => return Self::handle_decode_error(err),
         };
@@ -45,6 +45,21 @@ impl CommentRoutes {
         let result = comment_ops::handle_comment_command(CommentCommand {
             command: CommentSubcommand::GetCommentByProductId(GetCommentByProductId {
                 product_id: product_id_uuid,
+            }),
+        });
+    
+        Self::handle_comments_result(result)
+    }
+
+    async fn get_comment_by_id(Path(comment_id): Path<String>) -> BaseResponse {
+        let comment_id_uuid = match Self::decode_base32hex(&comment_id) {
+            Ok(uuid) => uuid,
+            Err(err) => return Self::handle_decode_error(err),
+        };
+    
+        let result = comment_ops::handle_comment_command(CommentCommand {
+            command: CommentSubcommand::GetCommentById(GetCommentById {
+                id: comment_id_uuid,
             }),
         });
     
@@ -135,11 +150,18 @@ impl CommentRoutes {
     fn handle_comment_result(result: Result<CommentResult, diesel::result::Error>) -> BaseResponse {
         match result {
             Ok(CommentResult::Comment(Some(comment))) => {
-                let response = Self::create_comment_response(comment);
-                (StatusCode::OK, Utf8Json(json!(response)))
+                let comment_response = Self::create_comment_response(comment);
+                let json_response = ApiResponse::new_success_data(comment_response);
+                (StatusCode::OK, Utf8Json(json!(json_response)))
             },
-            Ok(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": COMMENT_NOT_FOUND}))),
-            Err(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": FETCH_ERROR}))),
+            Ok(_) => {
+                let json_response: ApiResponse<()> = ApiResponse::new_error(COMMENT_NOT_FOUND.to_string());
+                (StatusCode::NOT_FOUND, Utf8Json(json!(json_response)))
+            },
+            Err(_) => {
+                let json_response: ApiResponse<()> = ApiResponse::new_error(FETCH_ERROR.to_string());
+                (StatusCode::NOT_FOUND, Utf8Json(json!(json_response)))
+            },
         }
     }
 
