@@ -102,11 +102,18 @@ impl CategoryRoutes {
     fn handle_category_product_result(result: Result<CategoryResult, diesel::result::Error>) -> BaseResponse {
         match result {
             Ok(CategoryResult::Category(Some(category))) => {
-                let response = Self::create_category_product_response(category);
-                (StatusCode::OK, Utf8Json(json!(response)))
+                let category_response = Self::create_category_product_response(category);
+                let json_response = ApiResponse::new_success_data(category_response);
+                (StatusCode::OK, Utf8Json(json!(json_response)))
             },
-            Ok(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": CATEGORY_NOT_FOUND}))),
-            Err(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": FETCH_ERROR}))),
+            Ok(_) => {
+                let json_response: ApiResponse<()> = ApiResponse::new_error(CATEGORY_NOT_FOUND.to_string());
+                (StatusCode::NOT_FOUND, Utf8Json(json!(json_response)))
+            },
+            Err(_) => {
+                let json_response: ApiResponse<()> = ApiResponse::new_error(FETCH_ERROR.to_string());
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
+            },
         }
     }
 

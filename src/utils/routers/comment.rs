@@ -160,7 +160,7 @@ impl CommentRoutes {
             },
             Err(_) => {
                 let json_response: ApiResponse<()> = ApiResponse::new_error(FETCH_ERROR.to_string());
-                (StatusCode::NOT_FOUND, Utf8Json(json!(json_response)))
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
             },
         }
     }

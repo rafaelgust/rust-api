@@ -99,9 +99,18 @@ impl BrandRoutes {
 
     fn handle_brand_result(result: Result<BrandResult, diesel::result::Error>) -> BaseResponse {
         match result {
-            Ok(BrandResult::Brand(Some(brand))) => (StatusCode::OK, Utf8Json(json!(brand))),
-            Ok(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": BRAND_NOT_FOUND}))),
-            Err(_) => (StatusCode::NOT_FOUND, Utf8Json(json!({"error": FETCH_ERROR}))),
+            Ok(BrandResult::Brand(Some(brand))) => {
+                let json_response = ApiResponse::new_success_data(brand);
+                (StatusCode::OK, Utf8Json(json!(json_response)))
+            },
+            Ok(_) => {
+                let json_response: ApiResponse<()> = ApiResponse::new_error(BRAND_NOT_FOUND.to_string());
+                (StatusCode::NOT_FOUND, Utf8Json(json!(json_response)))
+            },
+            Err(_) => {
+                let json_response: ApiResponse<()> = ApiResponse::new_error(FETCH_ERROR.to_string());
+                (StatusCode::INTERNAL_SERVER_ERROR, Utf8Json(json!(json_response)))
+            },
         }
     }
 

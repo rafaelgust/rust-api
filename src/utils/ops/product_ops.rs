@@ -100,13 +100,19 @@ fn create_product(
         published: true,
     };
 
-    connection.transaction(|conn| {
-        diesel::insert_into(products::table)
-            .values(&new_product)
-            .execute(conn)?;
-
-        Ok(format!("Product Created : {:?}", new_product.name))
-    })
+    match diesel::insert_into(products::table)
+        .values(&new_product)
+        .execute(connection)
+    {
+        Ok(_) => {
+            let success_message = format!("Product created successfully!");
+            Ok(success_message)
+        }
+        Err(e) => {
+            let error_message = format!("Error creating product: {}", e);
+            Err(Error::QueryBuilderError(error_message.into()))
+        }
+    }
 }
 
 fn update_product_by_id(
