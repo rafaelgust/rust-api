@@ -8,7 +8,7 @@ use axum::{
 use serde_json::json;
 
 use crate::utils::{
-    args::sub_commands::comment_commands::GetCommentById, response::BaseResponse, utf8_json::Utf8Json
+    args::sub_commands::comment_commands::GetCommentById, models::user::user::{User, UserCommentResponse}, response::BaseResponse, utf8_json::Utf8Json
 };
 
 use crate::utils::{models::comment::Comment, response::ApiResponse};
@@ -132,13 +132,16 @@ impl CommentRoutes {
         base32hex_to_uuid(id).map_err(|e| e.to_string())
     }
     
-    fn create_comment_response(comment: Comment) -> CommentResponse {
+    fn create_comment_response(comment: Comment, user: User) -> CommentResponse {
 
         CommentResponse {
             id: uuid_to_base32hex(comment.id),
             text: comment.text,
             created_at: comment.created_at,
-            user_id: uuid_to_base32hex(comment.user_id)
+            user: UserCommentResponse {
+                username: user.username,
+                role_id: user.role_id,
+            },
         }
     }
 
@@ -149,8 +152,8 @@ impl CommentRoutes {
 
     fn handle_comment_result(result: Result<CommentResult, diesel::result::Error>) -> BaseResponse {
         match result {
-            Ok(CommentResult::Comment(Some(comment))) => {
-                let comment_response = Self::create_comment_response(comment);
+            Ok(CommentResult::Comment(Some((comment, user)))) => {
+                let comment_response = Self::create_comment_response(comment, user);
                 let json_response = ApiResponse::new_success_data(comment_response);
                 (StatusCode::OK, Utf8Json(json!(json_response)))
             },
@@ -167,12 +170,12 @@ impl CommentRoutes {
 
     fn handle_comments_result(result: Result<CommentResult, diesel::result::Error>) -> BaseResponse {
         match result {
-            Ok(CommentResult::Comments(result)) => {
-                let comments_response: Vec<CommentResponse> = result
-                    .into_iter()
-                    .map(|comment| Self::create_comment_response(comment))
-                    .collect();
-
+            Ok(CommentResult::Comments(comments)) => {
+                let comments_response: Vec<CommentResponse> = comments
+                .into_iter()
+                .filter_map(|opt_comments| opt_comments.map(|(comment, user)| Self::create_comment_response(comment, user)))
+                .collect();
+    
                 let json_response = ApiResponse::new_success_data(comments_response);
                 (StatusCode::OK, Utf8Json(json!(json_response)))
             },

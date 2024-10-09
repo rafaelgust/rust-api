@@ -1,10 +1,13 @@
 use diesel::prelude::*;
 use uuid::Uuid;
 
+use crate::utils::models::user::user::User;
+
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
-#[derive(Queryable, Selectable)]
+#[derive(Queryable, Selectable, Associations, Identifiable)]
+#[diesel(belongs_to(User))]
 #[diesel(table_name = crate::schema::comments)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Comment {
@@ -41,12 +44,14 @@ pub struct RemoveComment<'a> {
 }
 
 // Response
+use super::user::user::UserCommentResponse;
+
 #[derive(Serialize)]
 pub struct CommentResponse {
     pub id: String,
     pub text: String,
     pub created_at: NaiveDateTime,
-    pub user_id: String
+    pub user: UserCommentResponse,
 }
 
 // Request

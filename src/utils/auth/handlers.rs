@@ -127,9 +127,17 @@ pub async fn sign_in(
         }
     };
 
-    if let Err(_) = verify_password(&user_data.password, &user.password_hash) {
-        let json_response: ApiResponse<String> = ApiResponse::new_error("Invalid credentials".to_string());
-        return (StatusCode::UNAUTHORIZED, Json(json_response)).into_response();
+    match verify_password(&user_data.password, &user.password_hash) {
+        Ok(is_valid) => {
+            if !is_valid {
+                let json_response: ApiResponse<String> = ApiResponse::new_error("Invalid credentials".to_string());
+                return (StatusCode::UNAUTHORIZED, Json(json_response)).into_response();
+            }
+        },
+        Err(_) => {
+            let json_response: ApiResponse<String> = ApiResponse::new_error("Error verifying password".to_string());
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(json_response)).into_response();
+        }
     }
 
     let access_token = match encode_jwt(user.id, user.email.clone(), user.username.clone(), 3600) {

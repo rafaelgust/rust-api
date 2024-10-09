@@ -47,6 +47,12 @@ pub struct UserResponse {
     pub published: bool,
 }
 
+#[derive(Serialize)]
+pub struct UserCommentResponse {
+    pub username: String,
+    pub role_id: i32,
+}
+
 //Request
 use std::borrow::Cow;
 
