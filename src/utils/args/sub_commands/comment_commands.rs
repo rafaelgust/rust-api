@@ -23,6 +23,7 @@ pub enum CommentSubcommand {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct GetCommentByProductId {
     pub product_id: Uuid,
+    pub order_is_desc: bool,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
@@ -51,6 +52,7 @@ pub struct DeleteComment {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct CommentPagination {
     pub limit: Option<i8>, 
-    pub last_id: Option<Uuid>, 
+    pub last_id: Option<Uuid>,
+    pub product_id: Option<Uuid>,
     pub order_by_desc: Option<bool>
 }

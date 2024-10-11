@@ -3,8 +3,9 @@ use axum::{
     http::StatusCode,
     response::Json,
     Router,
-    extract::Path,
+    extract::Path
 };
+
 use serde_json::json;
 
 use crate::utils::{
@@ -21,6 +22,8 @@ use crate::utils::args::sub_commands::comment_commands::{
 use crate::utils::constants::{COMMENT_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
 use crate::utils::cryptography::{base32hex_to_uuid, uuid_to_base32hex};
 
+use super::product;
+
 pub struct CommentRoutes;
 
 impl CommentRoutes {
@@ -28,7 +31,7 @@ impl CommentRoutes {
     pub fn get_routes() -> Router {
         Router::new()
             .route("/comment/id/:comment_id", get(Self::get_comment_by_id))
-            .route("/comment/:product_id", get(Self::get_comments_by_comment_id))
+            .route("/comment/:product_id/:is_desc", get(Self::get_comments_by_product_id))
             .route("/comment", get(Self::get_all_comments))
             .route("/comment/list", post(Self::get_comments))
             .route("/comment", post(Self::new_comment))
@@ -36,15 +39,18 @@ impl CommentRoutes {
             .route("/comment", delete(Self::delete_comment))
     }
 
-    async fn get_comments_by_comment_id(Path(product_id): Path<String>) -> BaseResponse {
+    async fn get_comments_by_product_id(Path((product_id, is_desc)): Path<(String, String)>) -> BaseResponse {
         let product_id_uuid = match Self::decode_base32hex(&product_id) {
             Ok(uuid) => uuid,
             Err(err) => return Self::handle_decode_error(err),
         };
+
+        let order_is_desc = is_desc.parse::<bool>().unwrap_or_default();
     
         let result = comment_ops::handle_comment_command(CommentCommand {
             command: CommentSubcommand::GetCommentByProductId(GetCommentByProductId {
                 product_id: product_id_uuid,
+                order_is_desc: order_is_desc,
             }),
         });
     
@@ -75,7 +81,12 @@ impl CommentRoutes {
     }
 
     async fn get_comments(Json(comments): Json<CommentPaginationRequest<'_>>) -> BaseResponse {
-        let last_id_uuid = match Self::decode_base32hex(&comments.last_id.unwrap_or_default()) {
+        let last_id_uuid = match Self::decode_base32hex(&comments.last_id.unwrap()) {
+            Ok(uuid) => Some(uuid),
+            Err(err) => return Self::handle_decode_error(err),
+        };
+
+        let product_id_uuid = match Self::decode_base32hex(&comments.product_id.unwrap()) {
             Ok(uuid) => Some(uuid),
             Err(err) => return Self::handle_decode_error(err),
         };
@@ -83,6 +94,7 @@ impl CommentRoutes {
         let result = comment_ops::handle_comment_command(CommentCommand {
             command: CommentSubcommand::Pagination(CommentPagination {
                 limit: comments.limit,
+                product_id: product_id_uuid,
                 last_id: last_id_uuid,
                 order_by_desc: comments.order_by_desc,
             }),

@@ -77,7 +77,8 @@ pub struct DeleteCommentRequest<'a> {
 
 #[derive(Deserialize)]
 pub struct CommentPaginationRequest<'a> {
-    pub limit: Option<i8>, 
-    pub last_id: Option<Cow<'a, str>>, 
+    pub limit: Option<i8>,
+    pub product_id: Option<Cow<'a, str>>, 
+    pub last_id: Option<Cow<'a, str>>,
     pub order_by_desc: Option<bool>
 }

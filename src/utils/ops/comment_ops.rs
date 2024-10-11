@@ -76,17 +76,26 @@ fn show_comments_by_product_id(
 ) -> Result<Vec<Option<(Comment, User)>>, Error> {
     info!("Showing comments for product ID: {:?}", comment.product_id);
     
-    let comments_result = comments::table
+    let mut query = comments::table
         .left_join(users::table)
         .filter(comments::product_id.eq(&comment.product_id))
         .filter(comments::published.eq(true))
+        .limit(10 as i64)
+        .into_boxed();
+
+    if comment.order_is_desc {
+        query = query.order(comments::created_at.desc());
+    } else {
+        query = query.order(comments::created_at.asc());
+    }
+
+    let comments_result = query
         .select((comments::all_columns, users::all_columns.nullable()))
         .load::<(Comment, Option<User>)>(connection)?;
 
     Ok(comments_result.into_iter().map(|(comment, user)| {
         user.map(|user| (comment, user))
-    }).collect())  
-
+    }).collect())
 }
 
 fn show_comments(connection: &mut PgConnection) -> Result<Vec<Option<(Comment, User)>>, Error> {
@@ -112,12 +121,14 @@ fn comment_pagination(
     info!("Pagination: {:?}", pagination);
 
     let limit = pagination.limit.unwrap_or(10);
+    let product = pagination.product_id.unwrap();
     let last_id = pagination.last_id;
     let order_by_desc = pagination.order_by_desc.unwrap_or(true);
 
     let mut query = comments::table
         .left_join(users::table)
         .filter(comments::published.eq(true))
+        .filter(comments::product_id.eq(product))
         .select((comments::all_columns, users::all_columns.nullable()))
         .into_boxed();
 
