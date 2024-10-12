@@ -64,14 +64,14 @@ pub struct InsertCommentRequest {
 }
 
 #[derive(Deserialize)]
-pub struct UpdateCommentRequest<'a> {
-    pub id: Cow<'a, str>,
-    pub text: Cow<'a, str>
+pub struct UpdateCommentRequest {
+    pub id: String,
+    pub text: String
 }
 
 #[derive(Deserialize)]
-pub struct DeleteCommentRequest<'a> {
-    pub id: Cow<'a, str>
+pub struct DeleteCommentRequest {
+    pub id: String
 }
 
 #[derive(Deserialize)]

@@ -42,11 +42,13 @@ pub struct CreateComment {
 pub struct UpdateComment {
     pub id: Uuid,
     pub text: String,
+    pub user_id: Uuid
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct DeleteComment {
     pub id: Uuid,
+    pub user_id: Uuid
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]

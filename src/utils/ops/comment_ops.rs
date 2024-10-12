@@ -192,6 +192,8 @@ fn update_comment_by_id(comment: UpdateCommentCommand, connection: &mut PgConnec
     };
 
     match diesel::update(comments::table.find(comment.id))
+        .filter(comments::user_id.eq(comment.user_id))
+        .filter(comments::published.eq(true))
         .set(update_comment)
         .execute(connection) 
     {
@@ -211,7 +213,9 @@ fn update_comment_by_id(comment: UpdateCommentCommand, connection: &mut PgConnec
 fn delete_comment_by_id(comment: DeleteCommentCommand, connection: &mut PgConnection) -> Result<String, Error> {
     info!("Deleting comment: {:?}", comment);
 
-    let num_deleted = diesel::update(comments::table.find(comment.id).filter(comments::published.eq(true)))
+    let num_deleted = diesel::update(comments::table.find(comment.id)
+        .filter(comments::published.eq(true)))
+        .filter(comments::user_id.eq(comment.user_id))
         .set(comments::published.eq(false))
         .execute(connection)?;
 

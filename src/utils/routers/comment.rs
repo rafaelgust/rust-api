@@ -122,10 +122,14 @@ impl CommentRoutes {
         Self::handle_message_result(result, StatusCode::ACCEPTED, StatusCode::UNAUTHORIZED)
     }
 
-    async fn update_comment(Json(comment): Json<UpdateCommentRequest<'_>>) -> BaseResponse {
+    async fn update_comment(
+        Extension(current_user): Extension<UserContext>,
+        Json(comment): Json<UpdateCommentRequest>,
+    ) -> BaseResponse {
         let comment = UpdateCommentCommand {
             id: Self::decode_base32hex(&comment.id).unwrap(),
             text: comment.text.trim().to_string(),
+            user_id: current_user.id,
         };
     
         let result = comment_ops::handle_comment_command(CommentCommand {
@@ -135,10 +139,14 @@ impl CommentRoutes {
         Self::handle_message_result(result, StatusCode::ACCEPTED, StatusCode::UNAUTHORIZED)
     }
     
-    async fn delete_comment(Json(comment): Json<DeleteCommentRequest<'_>>) -> BaseResponse {
+    async fn delete_comment(
+        Extension(current_user): Extension<UserContext>,
+        Json(comment): Json<DeleteCommentRequest>
+    ) -> BaseResponse {
         let result = comment_ops::handle_comment_command(CommentCommand {
             command: CommentSubcommand::Delete(DeleteComment {
                 id: Self::decode_base32hex(&comment.id).unwrap(),
+                user_id: current_user.id,
             }),
         });
     
