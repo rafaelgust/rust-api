@@ -3,18 +3,17 @@ use chrono::{Duration, Utc};
 use axum::http::StatusCode;
 use dotenv::dotenv;
 use std::env;
-use uuid::Uuid;
 
 use super::Claims;
 
-pub fn encode_jwt(user_id: Uuid, email: String, username: String, expires_in: i64) -> Result<String, StatusCode> {
+pub fn encode_jwt(user_id: String, email: String, username: String, expires_in: i64) -> Result<String, StatusCode> {
     dotenv().ok();
     let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let now = Utc::now();
     let exp = (now + Duration::try_seconds(expires_in).unwrap()).timestamp() as usize;
     let iat = now.timestamp() as usize;
     let claim = Claims { 
-        sub: user_id.to_string(),
+        sub: user_id,
         iat, 
         exp, 
         email,

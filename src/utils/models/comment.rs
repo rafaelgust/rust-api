@@ -58,10 +58,9 @@ pub struct CommentResponse {
 use std::borrow::Cow;
 
 #[derive(Deserialize)]
-pub struct InsertCommentRequest<'a> {
-    pub text: Cow<'a, str>,
-    pub product_id: Cow<'a, str>,
-    pub user_id: Cow<'a, str>
+pub struct InsertCommentRequest {
+    pub text: String,
+    pub product_id: String
 }
 
 #[derive(Deserialize)]

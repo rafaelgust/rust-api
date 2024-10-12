@@ -10,7 +10,7 @@ use serde_json::json;
 use crate::{auth::{
     jwt::{decode_jwt, encode_jwt},
     models::{AuthError, CurrentUser, RefreshTokenData, SignInData, Tokens},
-}, utils::{args::sub_commands::user_commands::{CreateUser, UserName}, cryptography::string_to_uuid, response::ApiResponse}};
+}, utils::{args::sub_commands::user_commands::{CreateUser, UserName}, cryptography::{base32hex_to_uuid, uuid_to_base32hex}, response::ApiResponse}};
 use crate::utils::{
     cryptography::{verify_password, hash_password},
     ops::user_ops::{self, UserResult},
@@ -109,7 +109,11 @@ pub async fn authorize(
         });
     }
 
-    let user = string_to_uuid(&token_data.claims.sub);
+    let user = base32hex_to_uuid(&token_data.claims.sub)
+        .map_err(|_| AuthError {
+            message: "Invalid user ID".to_string(),
+            status_code: StatusCode::UNAUTHORIZED,
+        })?;
 
     req.extensions_mut().insert(UserContext { id: user });
 
@@ -140,7 +144,9 @@ pub async fn sign_in(
         }
     }
 
-    let access_token = match encode_jwt(user.id, user.email.clone(), user.username.clone(), 3600) {
+    let user_id_encoded = uuid_to_base32hex(user.id);
+
+    let access_token = match encode_jwt(user_id_encoded.clone(), user.email.clone(), user.username.clone(), 3600) {
         Ok(token) => token,
         Err(_) => {
             let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate access token".to_string());
@@ -148,7 +154,7 @@ pub async fn sign_in(
         }
     };
 
-    let refresh_token = match encode_jwt(user.id, user.email, user.username, 86400 * 7) {
+    let refresh_token = match encode_jwt(user_id_encoded, user.email, user.username, 86400 * 7) {
         Ok(token) => token,
         Err(_) => {
             let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate refresh token".to_string());
@@ -187,7 +193,9 @@ pub async fn refresh_access_token(Json(data): Json<RefreshTokenData>) -> impl In
         }
     };
 
-    let new_access_token = match encode_jwt(user.id, user.email.clone(), user.username.clone(), 3600) {
+    let user_id_encoded = uuid_to_base32hex(user.id);
+
+    let new_access_token = match encode_jwt(user_id_encoded.clone(), user.email.clone(), user.username.clone(), 3600) {
         Ok(token) => token,
         Err(_) => {
             let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate access token".to_string());
@@ -195,7 +203,7 @@ pub async fn refresh_access_token(Json(data): Json<RefreshTokenData>) -> impl In
         }
     };
 
-    let new_refresh_token = match encode_jwt(user.id, user.email, user.username, 86400 * 7) {
+    let new_refresh_token = match encode_jwt(user_id_encoded, user.email, user.username, 86400 * 7) {
         Ok(token) => token,
         Err(_) => {
             let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate refresh token".to_string());

@@ -1,15 +1,11 @@
 use axum::{
-    routing::{get, post, put, delete},
-    http::StatusCode,
-    response::Json,
-    Router,
-    extract::Path
+    extract::Path, http::StatusCode, middleware, response::Json, routing::{delete, get, post, put}, Extension, Router
 };
 
 use serde_json::json;
 
 use crate::utils::{
-    args::sub_commands::comment_commands::GetCommentById, models::user::user::{User, UserCommentResponse}, response::BaseResponse, utf8_json::Utf8Json
+    args::sub_commands::comment_commands::GetCommentById, auth::{handlers::authorize, models::UserContext}, models::user::user::{User, UserCommentResponse}, response::BaseResponse, utf8_json::Utf8Json
 };
 
 use crate::utils::{models::comment::Comment, response::ApiResponse};
@@ -22,21 +18,27 @@ use crate::utils::args::sub_commands::comment_commands::{
 use crate::utils::constants::{COMMENT_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT};
 use crate::utils::cryptography::{base32hex_to_uuid, uuid_to_base32hex};
 
-use super::product;
 
 pub struct CommentRoutes;
 
 impl CommentRoutes {
 
     pub fn get_routes() -> Router {
-        Router::new()
+        let protected_routes = Router::new()
+            .route("/comment", put(Self::update_comment))
+            .route("/comment", delete(Self::delete_comment))
+            .route("/comment", post(Self::new_comment))
+            .layer(middleware::from_fn(authorize));
+
+        let public_routes = Router::new()
             .route("/comment/id/:comment_id", get(Self::get_comment_by_id))
             .route("/comment/:product_id/:is_desc", get(Self::get_comments_by_product_id))
             .route("/comment", get(Self::get_all_comments))
-            .route("/comment/list", post(Self::get_comments))
-            .route("/comment", post(Self::new_comment))
-            .route("/comment", put(Self::update_comment))
-            .route("/comment", delete(Self::delete_comment))
+            .route("/comment/list", post(Self::get_comments));
+
+        Router::new()
+        .merge(protected_routes)
+        .merge(public_routes)
     }
 
     async fn get_comments_by_product_id(Path((product_id, is_desc)): Path<(String, String)>) -> BaseResponse {
@@ -103,11 +105,14 @@ impl CommentRoutes {
         Self::handle_comments_result(result)
     }
 
-    async fn new_comment(Json(new_comment): Json<InsertCommentRequest<'_>>) -> BaseResponse {
+    async fn new_comment(
+        Extension(current_user): Extension<UserContext>,
+        Json(new_comment): Json<InsertCommentRequest>,
+    ) -> BaseResponse {
         let comment = CreateComment {
             text: new_comment.text.trim().to_string(),
             product_id: Self::decode_base32hex(&new_comment.product_id).unwrap(),
-            user_id: Self::decode_base32hex(&new_comment.user_id).unwrap(),
+            user_id: current_user.id,
         };
     
         let result = comment_ops::handle_comment_command(CommentCommand {

@@ -3,6 +3,7 @@ use bcrypt::{hash, verify, DEFAULT_COST};
 use uuid::Uuid;
 use data_encoding::BASE32HEX_NOPAD;
 
+#[cfg(test)]
 pub fn string_to_uuid(uuid: &str) -> Uuid {
     Uuid::parse_str(&uuid).unwrap()
 }
