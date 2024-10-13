@@ -78,6 +78,7 @@ pub async fn authorize(
         .get(http::header::AUTHORIZATION)
         .and_then(|header| header.to_str().ok())
         .ok_or_else(|| AuthError {
+            status : "error".to_string(),
             message: "Authorization header missing".to_string(),
             status_code: StatusCode::UNAUTHORIZED,
         })?;
@@ -85,11 +86,13 @@ pub async fn authorize(
     let token = auth_header
         .strip_prefix("Bearer ")
         .ok_or_else(|| AuthError {
+            status : "error".to_string(),
             message: "Invalid Authorization header format".to_string(),
             status_code: StatusCode::UNAUTHORIZED,
         })?;
 
     let token_data = decode_jwt(token).map_err(|_| AuthError {
+        status : "error".to_string(),
         message: "Invalid token".to_string(),
         status_code: StatusCode::UNAUTHORIZED,
     })?;
@@ -97,6 +100,7 @@ pub async fn authorize(
     let now = Utc::now().timestamp() as usize;
     if now > token_data.claims.exp {
         return Err(AuthError {
+            status : "error".to_string(),
             message: "Token has expired".to_string(),
             status_code: StatusCode::UNAUTHORIZED,
         });
@@ -104,6 +108,7 @@ pub async fn authorize(
 
     if !check_exist_username(&token_data.claims.username) {
         return Err(AuthError {
+            status : "error".to_string(),
             message: "User not found".to_string(),
             status_code: StatusCode::UNAUTHORIZED,
         });
@@ -111,6 +116,7 @@ pub async fn authorize(
 
     let user = base32hex_to_uuid(&token_data.claims.sub)
         .map_err(|_| AuthError {
+            status : "error".to_string(),
             message: "Invalid user ID".to_string(),
             status_code: StatusCode::UNAUTHORIZED,
         })?;

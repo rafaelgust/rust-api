@@ -12,13 +12,7 @@ use crate::utils::models::comment::{NewComment, UpdateComment, Comment};
 use crate::schema::comments::dsl::*;
 
 use crate::utils::args::commands::CommentCommand;
-use crate::utils::args::sub_commands::comment_commands::{CommentSubcommand, 
-    GetCommentByProductId as GetCommentByProductIdCommand,
-    GetCommentById as GetCommentByIdCommand,
-    CreateComment as CreateCommentCommand, 
-    UpdateComment as UpdateCommentCommand, 
-    DeleteComment as DeleteCommentCommand,
-    CommentPagination as CommentPaginationCommand
+use crate::utils::args::sub_commands::comment_commands::{CommentPagination as CommentPaginationCommand, CommentSubcommand, CreateComment as CreateCommentCommand, DeleteComment as DeleteCommentCommand, GetAmountOfComments, GetCommentById as GetCommentByIdCommand, GetCommentByProductId as GetCommentByProductIdCommand, UpdateComment as UpdateCommentCommand
 };
 
 pub enum CommentResult {
@@ -32,9 +26,10 @@ pub fn handle_comment_command(comment: CommentCommand) -> Result<CommentResult, 
     let command = comment.command;
 
     match command {
+        CommentSubcommand::GetAmountOfComments(comment) => 
+            show_amount_of_comments(comment, connection).map(CommentResult::Message),
         CommentSubcommand::GetCommentByProductId(comment) => 
             show_comments_by_product_id(comment, connection).map(CommentResult::Comments),
-        
         CommentSubcommand::GetCommentById(comment) => {
             show_comment_by_id(comment, connection).map(CommentResult::Comment)
         }
@@ -54,6 +49,18 @@ pub fn handle_comment_command(comment: CommentCommand) -> Result<CommentResult, 
             show_comments(connection).map(CommentResult::Comments)
         }
     }
+}
+
+fn show_amount_of_comments(comment: GetAmountOfComments, connection: &mut PgConnection) -> Result<String, Error> {
+    info!("Showing amount of comments");
+
+    let amount: i64 = comments::table
+        .filter(comments::product_id.eq(&comment.product_id))
+        .filter(comments::published.eq(true))
+        .count()
+        .get_result(connection)?;
+
+    Ok(amount.to_string())
 }
 
 fn show_comment_by_id(comment: GetCommentByIdCommand, connection: &mut PgConnection) -> Result<Option<(Comment, User)>, Error> {

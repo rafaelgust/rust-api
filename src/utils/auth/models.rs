@@ -33,13 +33,14 @@ pub struct CurrentUser {
 }
 
 pub struct AuthError {
+    pub status: String,
     pub message: String,
     pub status_code: StatusCode,
 }
 
 impl IntoResponse for AuthError {
     fn into_response(self) -> Response<Body> {
-        let body = Json(json!({ "error": self.message }));
+        let body = Json(json!({ "status": "error", "message": self.message }));
         (self.status_code, body).into_response()
     }
 }

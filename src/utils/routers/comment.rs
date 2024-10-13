@@ -5,7 +5,7 @@ use axum::{
 use serde_json::json;
 
 use crate::utils::{
-    args::sub_commands::comment_commands::GetCommentById, auth::{handlers::authorize, models::UserContext}, models::user::user::{User, UserCommentResponse}, response::BaseResponse, utf8_json::Utf8Json
+    args::sub_commands::comment_commands::{GetAmountOfComments, GetCommentById}, auth::{handlers::authorize, models::UserContext}, models::user::user::{User, UserCommentResponse}, response::BaseResponse, utf8_json::Utf8Json
 };
 
 use crate::utils::{models::comment::Comment, response::ApiResponse};
@@ -31,6 +31,7 @@ impl CommentRoutes {
             .layer(middleware::from_fn(authorize));
 
         let public_routes = Router::new()
+            .route("/comment/amount/:product_id", get(Self::get_amount_of_comments))
             .route("/comment/id/:comment_id", get(Self::get_comment_by_id))
             .route("/comment/:product_id/:is_desc", get(Self::get_comments_by_product_id))
             .route("/comment", get(Self::get_all_comments))
@@ -39,6 +40,21 @@ impl CommentRoutes {
         Router::new()
         .merge(protected_routes)
         .merge(public_routes)
+    }
+
+    async fn get_amount_of_comments(Path(product_id): Path<String>) -> BaseResponse {
+        let product_id_uuid = match Self::decode_base32hex(&product_id) {
+            Ok(uuid) => uuid,
+            Err(err) => return Self::handle_decode_error(err),
+        };
+    
+        let result = comment_ops::handle_comment_command(CommentCommand {
+            command: CommentSubcommand::GetAmountOfComments(GetAmountOfComments {
+                product_id: product_id_uuid,
+            }),
+        });
+    
+        Self::handle_message_result(result, StatusCode::OK, StatusCode::INTERNAL_SERVER_ERROR)
     }
 
     async fn get_comments_by_product_id(Path((product_id, is_desc)): Path<(String, String)>) -> BaseResponse {

@@ -5,6 +5,8 @@ use uuid::Uuid;
 
 #[derive(Debug, Subcommand)]
 pub enum CommentSubcommand {
+    GetAmountOfComments(GetAmountOfComments),
+
     GetCommentByProductId(GetCommentByProductId),
 
     GetCommentById(GetCommentById),
@@ -18,6 +20,10 @@ pub enum CommentSubcommand {
     ShowAll,
 
     Pagination(CommentPagination),
+}
+#[derive(Debug, Args, Deserialize, Serialize)]
+pub struct GetAmountOfComments {
+    pub product_id: Uuid,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
