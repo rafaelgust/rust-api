@@ -8,6 +8,8 @@ use uuid::Uuid;
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
+    pub first_name: String,
+    pub last_name: String,
     pub username: String,
     pub password: String,
     pub email: String,
@@ -22,6 +24,8 @@ pub struct NewUser<'a> {
     pub id: &'a Uuid,
     pub username: &'a str,
     pub password: &'a str,
+    pub first_name: &'a str,
+    pub last_name: &'a str,
     pub email: &'a str,
     pub role_id: &'a i32,
     pub published: bool,
@@ -33,6 +37,8 @@ pub struct UpdateUser<'a> {
     pub id: &'a Uuid,
     pub username: Option<&'a str>,
     pub password: Option<&'a str>,
+    pub first_name: Option<&'a str>,
+    pub last_name: Option<&'a str>,
     pub email: Option<&'a str>,
     pub role_id: Option<i32>,
     pub published: Option<bool>,
@@ -42,6 +48,8 @@ pub struct UpdateUser<'a> {
 pub struct UserResponse {
     pub id: String,
     pub username: String,
+    pub first_name: String,
+    pub last_name: String,
     pub email: String,
     pub role_id: i32,
     pub published: bool,
@@ -50,6 +58,8 @@ pub struct UserResponse {
 #[derive(Serialize)]
 pub struct UserCommentResponse {
     pub username: String,
+    pub first_name: String,
+    pub last_name: String,
     pub role_id: i32,
 }
 
@@ -61,6 +71,8 @@ pub struct InsertUserRequest<'a> {
     pub username: Cow<'a, str>,
     pub email: Cow<'a, str>,
     pub password: Cow<'a, str>,
+    pub first_name: Cow<'a, str>,
+    pub last_name: Cow<'a, str>,
     pub role_id: i32
 }
 
@@ -70,6 +82,8 @@ pub struct UpdateUserRequest<'a> {
     pub username: Option<Cow<'a, str>>,
     pub email: Option<Cow<'a, str>>,
     pub password: Option<Cow<'a, str>>,
+    pub first_name: Option<Cow<'a, str>>,
+    pub last_name: Option<Cow<'a, str>>,
     pub role_id: Option<i32>,
     pub published: Option<bool>
 }

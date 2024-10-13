@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::utils::models::user::user::{NewUser, UpdateUser, User};
 use crate::schema::users::dsl::*;
 use crate::utils::args::commands::UserCommand;
-use crate::utils::args::sub_commands::user_commands::{UserSubcommand, Auth as GetUserByEmailCommand, CreateUser as CreateUserCommand, UpdateUser as UpdateUserCommand, DeleteUser as DeleteUserCommand, UserName as VerifyUserName};
+use crate::utils::args::sub_commands::user_commands::{UserSubcommand, EmailAuth as GetUserByEmailCommand, UserNameAuth as GetUserByUserNameCommand, CreateUser as CreateUserCommand, UpdateUser as UpdateUserCommand, DeleteUser as DeleteUserCommand, UserName as VerifyUserName};
 
 pub enum UserResult {
     User(Option<User>),
@@ -18,6 +18,7 @@ pub fn handle_user_command(user: UserCommand) -> Result<UserResult, Error> {
     let command = user.command;
     match command {
         UserSubcommand::GetUserByEmail(user) => show_user_by_email(user, connection).map(UserResult::User),
+        UserSubcommand::GetUserByUserName(user) => show_user_by_username(user, connection).map(UserResult::User),
         UserSubcommand::Create(user) => create_user(user, connection).map(UserResult::Message),
         UserSubcommand::Update(user) => update_user_by_id(user, connection).map(UserResult::User),
         UserSubcommand::Delete(delete_entity) => delete_user_by_id(delete_entity, connection).map(UserResult::Message),
@@ -30,6 +31,17 @@ fn show_user_by_email(user: GetUserByEmailCommand, connection: &mut PgConnection
     
     let user_result = users
         .filter(email.eq(user.email).and(published.eq(true)))
+        .first::<User>(connection)
+        .optional();
+        
+    user_result
+}
+
+fn show_user_by_username(user: GetUserByUserNameCommand, connection: &mut PgConnection) -> Result<Option<User>, Error> {
+    info!("Showing user: {:?}", user);
+    
+    let user_result = users
+        .filter(username.eq(user.username).and(published.eq(true)))
         .first::<User>(connection)
         .optional();
         
@@ -61,6 +73,8 @@ fn create_user(user: CreateUserCommand, connection: &mut PgConnection) -> Result
         username: &user.username,
         email: &user.email,
         password: &user.password_hash,
+        first_name: &user.first_name,
+        last_name: &user.last_name,
         role_id: &user.role_id,
         published: true,
     };
@@ -81,6 +95,8 @@ fn update_user_by_id(user: UpdateUserCommand, connection: &mut PgConnection) -> 
         username: user.username.as_deref(),
         email: user.email.as_deref(),
         password: user.password_hash.as_deref(),
+        first_name: user.first_name.as_deref(),
+        last_name: user.last_name.as_deref(),
         role_id: user.role_id,
         published: user.published,
     };

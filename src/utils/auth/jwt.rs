@@ -6,7 +6,7 @@ use std::env;
 
 use super::Claims;
 
-pub fn encode_jwt(user_id: String, email: String, username: String, expires_in: i64) -> Result<String, StatusCode> {
+pub fn encode_jwt(user_id: String, name: String, username: String, expires_in: i64) -> Result<String, StatusCode> {
     dotenv().ok();
     let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let now = Utc::now();
@@ -16,7 +16,7 @@ pub fn encode_jwt(user_id: String, email: String, username: String, expires_in: 
         sub: user_id,
         iat, 
         exp, 
-        email,
+        name,
         username
     };
     encode(

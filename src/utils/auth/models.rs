@@ -20,14 +20,14 @@ pub struct Claims {
     pub sub: String,
     pub exp: usize,
     pub iat: usize,
-    pub email: String,
+    pub name: String,
     pub username: String,
 }
 
 #[derive(Clone)]
 pub struct CurrentUser {
     pub id: Uuid,
-    pub email: String,
+    pub name: String,
     pub username: String,
     pub password_hash: String,
 }
@@ -50,6 +50,8 @@ pub struct CreateUserData<'a> {
     pub email: Cow<'a, str>,
     pub username: Cow<'a, str>,
     pub password: Cow<'a, str>,
+    pub first_name: Cow<'a, str>,
+    pub last_name: Cow<'a, str>,
 }
 
 #[derive(Deserialize)]

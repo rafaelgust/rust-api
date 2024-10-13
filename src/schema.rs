@@ -108,6 +108,10 @@ diesel::table! {
 diesel::table! {
     users (id) {
         id -> Uuid,
+        #[max_length = 64]
+        first_name -> Varchar,
+        #[max_length = 64]
+        last_name -> Varchar,
         #[max_length = 32]
         username -> Varchar,
         #[max_length = 512]

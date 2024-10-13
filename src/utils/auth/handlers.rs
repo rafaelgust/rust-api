@@ -10,11 +10,11 @@ use serde_json::json;
 use crate::{auth::{
     jwt::{decode_jwt, encode_jwt},
     models::{AuthError, CurrentUser, RefreshTokenData, SignInData, Tokens},
-}, utils::{args::sub_commands::user_commands::{CreateUser, UserName}, cryptography::{base32hex_to_uuid, uuid_to_base32hex}, response::ApiResponse}};
+}, utils::{args::sub_commands::user_commands::{CreateUser, EmailAuth, UserName, UserNameAuth}, cryptography::{base32hex_to_uuid, uuid_to_base32hex}, response::ApiResponse}};
 use crate::utils::{
     cryptography::{verify_password, hash_password},
     ops::user_ops::{self, UserResult},
-    args::{commands::UserCommand, sub_commands::user_commands::{Auth, UserSubcommand}},
+    args::{commands::UserCommand, sub_commands::user_commands::UserSubcommand},
 };
 
 use crate::utils::constants::UNEXPECTED_RESULT;
@@ -37,6 +37,8 @@ pub async fn create_user(Json(new_user_data): Json<CreateUserData<'_>>) ->  impl
         email: new_user_data.email.trim().to_string(),
         username: new_user_data.username.trim().to_string(),
         password_hash: hashed_password,
+        first_name: new_user_data.first_name.trim().to_string(),
+        last_name: new_user_data.last_name.trim().to_string(),
         role_id: 4,
     };
     
@@ -152,7 +154,7 @@ pub async fn sign_in(
 
     let user_id_encoded = uuid_to_base32hex(user.id);
 
-    let access_token = match encode_jwt(user_id_encoded.clone(), user.email.clone(), user.username.clone(), 3600) {
+    let access_token = match encode_jwt(user_id_encoded.clone(), user.name.clone(), user.username.clone(), 3600) {
         Ok(token) => token,
         Err(_) => {
             let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate access token".to_string());
@@ -160,7 +162,7 @@ pub async fn sign_in(
         }
     };
 
-    let refresh_token = match encode_jwt(user_id_encoded, user.email, user.username, 86400 * 7) {
+    let refresh_token = match encode_jwt(user_id_encoded, user.name, user.username, 86400 * 7) {
         Ok(token) => token,
         Err(_) => {
             let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate refresh token".to_string());
@@ -191,7 +193,7 @@ pub async fn refresh_access_token(Json(data): Json<RefreshTokenData>) -> impl In
         return (StatusCode::UNAUTHORIZED, Json(json_response)).into_response();
     }
 
-    let user = match retrieve_user_by_email(&token_data.claims.email) {
+    let user = match retrieve_user_by_username(&token_data.claims.username) {
         Some(user) => user,
         None => {
             let json_response: ApiResponse<String> = ApiResponse::new_error("User not found".to_string());
@@ -201,7 +203,7 @@ pub async fn refresh_access_token(Json(data): Json<RefreshTokenData>) -> impl In
 
     let user_id_encoded = uuid_to_base32hex(user.id);
 
-    let new_access_token = match encode_jwt(user_id_encoded.clone(), user.email.clone(), user.username.clone(), 3600) {
+    let new_access_token = match encode_jwt(user_id_encoded.clone(), user.name.clone(), user.username.clone(), 3600) {
         Ok(token) => token,
         Err(_) => {
             let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate access token".to_string());
@@ -209,7 +211,7 @@ pub async fn refresh_access_token(Json(data): Json<RefreshTokenData>) -> impl In
         }
     };
 
-    let new_refresh_token = match encode_jwt(user_id_encoded, user.email, user.username, 86400 * 7) {
+    let new_refresh_token = match encode_jwt(user_id_encoded, user.name, user.username, 86400 * 7) {
         Ok(token) => token,
         Err(_) => {
             let json_response: ApiResponse<String> = ApiResponse::new_error("Failed to generate refresh token".to_string());
@@ -245,9 +247,30 @@ fn check_exist_username(username: &str) -> bool {
     }
 }
 
+fn retrieve_user_by_username(username: &str) -> Option<CurrentUser> {
+    let result = user_ops::handle_user_command(UserCommand {
+        command: UserSubcommand::GetUserByUserName(UserNameAuth {
+            username: username.trim().to_string(),
+        }),
+    });
+
+    match result {
+        Ok(UserResult::User(Some(user))) => {
+            let current_user = CurrentUser {
+                id: user.id,
+                username: user.username,
+                name: user.first_name + " " + &user.last_name,
+                password_hash: user.password,
+            };
+            Some(current_user)
+        },
+        _ => None,
+    }
+}
+
 fn retrieve_user_by_email(email: &str) -> Option<CurrentUser> {
     let result = user_ops::handle_user_command(UserCommand {
-        command: UserSubcommand::GetUserByEmail(Auth {
+        command: UserSubcommand::GetUserByEmail(EmailAuth {
             email: email.trim().to_string(),
         }),
     });
@@ -257,8 +280,8 @@ fn retrieve_user_by_email(email: &str) -> Option<CurrentUser> {
             let current_user = CurrentUser {
                 id: user.id,
                 username: user.username,
-                email: user.email,
-                password_hash: user.password
+                name: user.first_name + " " + &user.last_name,
+                password_hash: user.password,
             };
             Some(current_user)
         },
