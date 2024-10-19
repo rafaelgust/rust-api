@@ -31,6 +31,7 @@ pub fn create_router() -> Router {
     let public_routes = Router::new()
         .route("/", get(root))
         .route("/create", post(auth::handlers::create_user))
+        .route("/check/user/:username", get(auth::handlers::check_username))
         .route("/signin", post(auth::handlers::sign_in))
         .route("/refresh", post(auth::handlers::refresh_access_token));
 

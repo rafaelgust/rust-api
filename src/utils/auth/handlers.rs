@@ -1,6 +1,6 @@
 use axum::{
     body::Body,
-    extract::{Json, Request},
+    extract::{Json, Path, Request},
     http::{self, Response, StatusCode},
     middleware::Next, response::IntoResponse,
 };
@@ -232,6 +232,22 @@ pub async fn sign_out(_req: Request) -> impl IntoResponse {
     // For now, we're just returning OK
     let json_response: ApiResponse<String> = ApiResponse::new_success_message("Successfully signed out".to_string());
     (StatusCode::OK, Json(json_response)).into_response()
+}
+
+pub async fn check_username(Path(username): Path<String>) -> impl IntoResponse {
+    let username = username.trim().to_string();
+    let result = check_exist_username(&username);
+
+    match result {
+        true => {
+            let json_response: ApiResponse<bool> = ApiResponse::new_error("Username already in use".to_string());
+            (StatusCode::NOT_ACCEPTABLE, Json(json_response)).into_response()
+        },
+        false => {
+            let json_response: ApiResponse<bool> = ApiResponse::new_success_message("Username is available".to_string());
+            (StatusCode::ACCEPTED, Json(json_response)).into_response()
+        },
+    }
 }
 
 fn check_exist_username(username: &str) -> bool {
