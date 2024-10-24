@@ -9,7 +9,16 @@ use log::info;
 use uuid::Uuid;
 use crate::utils::models::product::{NewProduct, UpdateProduct, Product};
 use crate::utils::args::commands::ProductCommand;
-use crate::utils::args::sub_commands::product_commands::{ProductSubcommand, GetProductById as GetProductByIdCommand, GetProductByIdUrlName as GetProductByIdUrlNameCommand, CreateProduct as CreateProductCommand, UpdateProduct as UpdateProductCommand, DeleteProduct as DeleteProductCommand, ProductPagination as ProductPaginationCommand};
+use crate::utils::args::sub_commands::product_commands::{
+    ProductSubcommand, 
+    GetProductById as GetProductByIdCommand, 
+    GetProductByUrlName as GetProductByUrlNameCommand, 
+    GetProductByName as GetProductByNameCommand,
+    CreateProduct as CreateProductCommand, 
+    UpdateProduct as UpdateProductCommand, 
+    DeleteProduct as DeleteProductCommand, 
+    ProductPagination as ProductPaginationCommand
+};
 
 pub enum ProductResult {
     Product(Option<(Product, Option<Brand>, Vec<Category>)>),
@@ -22,7 +31,8 @@ pub fn handle_product_command(product: ProductCommand) -> Result<ProductResult, 
     let command = product.command;
     match command {
         ProductSubcommand::GetProductById(product) => show_product_by_id(product, connection).map(ProductResult::Product),
-        ProductSubcommand::GetProductByIdUrlName(product) => show_product_by_url_name(product, connection).map(ProductResult::Product),
+        ProductSubcommand::GetProductByUrlName(product) => show_product_by_url_name(product, connection).map(ProductResult::Product),
+        ProductSubcommand::GetProductByName(product) => show_product_by_name(product, connection).map(ProductResult::Products),
         ProductSubcommand::Create(product) => create_product(product, connection).map(ProductResult::Message),
         ProductSubcommand::Update(product) => update_product_by_id(product, connection).map(ProductResult::Message),
         ProductSubcommand::Delete(delete_entity) => delete_product_by_id(delete_entity, connection).map(ProductResult::Message),
@@ -31,7 +41,7 @@ pub fn handle_product_command(product: ProductCommand) -> Result<ProductResult, 
     }
 }
 
-fn show_product_by_url_name(product: GetProductByIdUrlNameCommand, connection: &mut PgConnection) -> Result<Option<(Product, Option<Brand>, Vec<Category>)>, Error> {
+fn show_product_by_url_name(product: GetProductByUrlNameCommand, connection: &mut PgConnection) -> Result<Option<(Product, Option<Brand>, Vec<Category>)>, Error> {
     info!("Showing product: {:?}", product);
 
     let product_result = products::table
@@ -55,6 +65,37 @@ fn show_product_by_url_name(product: GetProductByIdUrlNameCommand, connection: &
     } else {
         Ok(None)
     }
+}
+
+fn show_product_by_name(product: GetProductByNameCommand, connection: &mut PgConnection) -> Result<Vec<Option<(Product, Option<Brand>, Vec<Category>)>>, Error> {
+    info!("Showing product: {:?}", product);
+    
+    let mut result = Vec::new();
+    
+    let search_term = product.name.trim().to_lowercase();
+    let search_pattern = format!("%{}%", search_term);
+    
+    let product_brands: Vec<(Product, Option<Brand>)> = products::table
+        .left_join(brands::table)
+        .filter(products::name.ilike(search_pattern))
+        .filter(products::published.eq(true))
+        .select((products::all_columns, brands::all_columns.nullable()))
+        .order(products::name.desc())
+        .load(connection)?;
+        
+        for (product, brand) in product_brands {
+            let category_ids: Vec<i32> = ProductCategory::belonging_to(&product)
+                .select(product_categories::category_id)
+                .load::<i32>(connection)?;
+    
+            let categories = categories::table
+                .filter(categories::id.eq_any(category_ids))
+                .load::<Category>(connection)?;
+    
+            result.push(Some((product, brand, categories)));
+        }
+    
+    Ok(result)
 }
 
 fn show_product_by_id(product: GetProductByIdCommand, connection: &mut PgConnection) -> Result<Option<(Product, Option<Brand>, Vec<Category>)>, Error> {

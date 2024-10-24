@@ -4,8 +4,7 @@ use axum::{
 use serde_json::json;
 
 use crate::utils::{
-    response::BaseResponse,
-    utf8_json::Utf8Json,
+    args::sub_commands::product_commands::GetProductByName, response::BaseResponse, utf8_json::Utf8Json
 };
 
 use crate::utils::{
@@ -18,7 +17,7 @@ use crate::utils::{
     ops::product_ops::{self, ProductResult},
     args::{
         commands::ProductCommand,
-        sub_commands::product_commands::{ProductSubcommand, CreateProduct, DeleteProduct, GetProductById, GetProductByIdUrlName, UpdateProduct as UpdateProductCommand, ProductPagination}
+        sub_commands::product_commands::{ProductSubcommand, CreateProduct, DeleteProduct, GetProductById, GetProductByUrlName, UpdateProduct as UpdateProductCommand, ProductPagination}
     },
     constants::{PRODUCT_NOT_FOUND, FETCH_ERROR, UNEXPECTED_RESULT},
     cryptography::{base32hex_to_uuid, uuid_to_base32hex}
@@ -31,6 +30,7 @@ impl ProductRoutes {
     pub fn get_routes() -> Router {
         Router::new()
             .route("/p/:url_name", get(Self::get_product_by_url_name))
+            .route("/p/name/:name", get(Self::get_product_by_name))
             .route("/product/:id", get(Self::get_product_by_id))
             .route("/product", get(Self::get_all_products))
             .route("/product/list", post(Self::get_products))
@@ -41,10 +41,18 @@ impl ProductRoutes {
 
     async fn get_product_by_url_name(Path(url_name): Path<String>) -> BaseResponse {
         let result = product_ops::handle_product_command(ProductCommand {
-            command: ProductSubcommand::GetProductByIdUrlName(GetProductByIdUrlName { url_name }),
+            command: ProductSubcommand::GetProductByUrlName(GetProductByUrlName { url_name }),
         });
 
         Self::handle_product_result(result)
+    }
+
+    async fn get_product_by_name(Path(name): Path<String>) -> BaseResponse {
+        let result = product_ops::handle_product_command(ProductCommand {
+            command: ProductSubcommand::GetProductByName(GetProductByName { name }),
+        });
+
+        Self::handle_products_result(result)
     }
 
     async fn get_product_by_id(Path(id): Path<String>) -> BaseResponse {
