@@ -11,7 +11,8 @@ use crate::schema::brands::dsl::*;
 
 use crate::utils::args::commands::BrandCommand;
 use crate::utils::args::sub_commands::brand_commands::{BrandSubcommand, 
-    GetBrandByUrlName as GetBrandByUrlNameCommand, 
+    GetBrandByUrlName as GetBrandByUrlNameCommand,
+    GetBrandByName as GetBrandByNameCommand,
     CreateBrand as CreateBrandCommand, 
     UpdateBrand as UpdateBrandCommand, 
     DeleteBrand as DeleteBrandCommand,
@@ -30,6 +31,9 @@ pub fn handle_brand_command(brand: BrandCommand) -> Result<BrandResult, Error> {
     match command {
         BrandSubcommand::Show(brand) => {
             show_brand_by_url_name(brand, connection).map(BrandResult::Brand)
+        }
+        BrandSubcommand::GetBrandByName(brand) => {
+            show_brand_by_name(brand, connection).map(BrandResult::Brands)
         }
         BrandSubcommand::Create(brand) => {
             create_brand(brand, connection).map(BrandResult::Message)
@@ -59,6 +63,21 @@ fn show_brand_by_url_name(brand: GetBrandByUrlNameCommand, connection: &mut PgCo
         .optional();
 
     brand_result
+}
+
+fn show_brand_by_name(brand: GetBrandByNameCommand, connection: &mut PgConnection) -> Result<Vec<Brand>, diesel::result::Error> {
+    info!("Showing brand: {:?}", brand);
+        
+    let search_term = brand.name.trim().to_lowercase();
+    let search_pattern = format!("%{}%", search_term);
+    
+    let query = brands
+        .filter(published.eq(true))
+        .filter(name.ilike(search_pattern))
+        .order(name.desc())
+        .load::<Brand>(connection);
+
+    query
 }
 
 fn create_brand(brand: CreateBrandCommand, connection: &mut PgConnection) -> Result<String, Error> {

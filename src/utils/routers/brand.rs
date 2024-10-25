@@ -4,8 +4,7 @@ use axum::{
 use serde_json::json;
 
 use crate::utils::{
-    response::BaseResponse,
-    utf8_json::Utf8Json,
+    args::sub_commands::brand_commands::GetBrandByName, response::BaseResponse, utf8_json::Utf8Json
 };
 
 use crate::utils::{
@@ -21,6 +20,7 @@ impl BrandRoutes {
     pub fn get_routes() -> Router {
         Router::new()
             .route("/brand/:url_name", get(Self::get_brand_by_url_name))
+            .route("/brand/name/:name", get(Self::get_brand_by_name))
             .route("/brand", get(Self::get_all_brands))
             .route("/brand/list", post(Self::get_brands))
             .route("/brand", post(Self::new_brand))
@@ -34,6 +34,14 @@ impl BrandRoutes {
         });
 
         Self::handle_brand_result(result)
+    }
+
+    async fn get_brand_by_name(Path(name): Path<String>) -> BaseResponse {
+        let result = brand_ops::handle_brand_command(BrandCommand {
+            command: BrandSubcommand::GetBrandByName(GetBrandByName { name }),
+        });
+
+        Self::handle_brands_result(result)
     }
 
     async fn get_all_brands() -> BaseResponse {

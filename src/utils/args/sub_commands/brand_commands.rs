@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 pub enum BrandSubcommand {
     Show(GetBrandByUrlName),
 
+    GetBrandByName(GetBrandByName),
+
     Create(CreateBrand),
 
     Update(UpdateBrand),
@@ -20,6 +22,11 @@ pub enum BrandSubcommand {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct GetBrandByUrlName {
     pub url_name: String,
+}
+
+#[derive(Debug, Args, Deserialize, Serialize)]
+pub struct GetBrandByName {
+    pub name: String,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]
