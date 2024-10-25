@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 pub enum CategorySubcommand {
     Show(GetCategoryByUrlName),
 
+    GetCategoryByName(GetCategoryByName),
+
     Create(CreateCategory),
 
     Update(UpdateCategory),
@@ -18,6 +20,11 @@ pub enum CategorySubcommand {
 #[derive(Debug, Args, Deserialize, Serialize)]
 pub struct GetCategoryByUrlName {
     pub url_name: String,
+}
+
+#[derive(Debug, Args, Deserialize, Serialize)]
+pub struct GetCategoryByName {
+    pub name: String,
 }
 
 #[derive(Debug, Args, Deserialize, Serialize)]

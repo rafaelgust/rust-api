@@ -10,7 +10,14 @@ use crate::utils::models::category::{NewCategory, UpdateCategory, Category};
 use crate::schema::categories::dsl::*;
 
 use crate::utils::args::commands::CategoryCommand;
-use crate::utils::args::sub_commands::category_commands::{CategorySubcommand, GetCategoryByUrlName as GetCategoryByUrlNameCommand, CreateCategory as CreateCategoryCommand, UpdateCategory as UpdateCategoryCommand, DeleteCategory as DeleteCategoryCommand};
+use crate::utils::args::sub_commands::category_commands::{
+    CategorySubcommand, 
+    GetCategoryByUrlName as GetCategoryByUrlNameCommand, 
+    GetCategoryByName as GetCategoryByNameCommand,
+    CreateCategory as CreateCategoryCommand, 
+    UpdateCategory as UpdateCategoryCommand, 
+    DeleteCategory as DeleteCategoryCommand
+};
 
 pub enum CategoryResult {
     Category(Option<Category>),
@@ -24,6 +31,9 @@ pub fn handle_category_command(category: CategoryCommand) -> Result<CategoryResu
     match command {
         CategorySubcommand::Show(category) => {
             show_category_by_url_name(category, connection).map(CategoryResult::Category)
+        }
+        CategorySubcommand::GetCategoryByName(category) => {
+            show_category_by_name(category, connection).map(CategoryResult::Categories)
         }
         CategorySubcommand::Create(category) => {
             create_category(category, connection).map(CategoryResult::Message)
@@ -50,6 +60,20 @@ fn show_category_by_url_name(category: GetCategoryByUrlNameCommand, connection: 
         .optional();
 
     category_result
+}
+
+fn show_category_by_name(brand: GetCategoryByNameCommand, connection: &mut PgConnection) -> Result<Vec<Category>, Error> {
+    info!("Showing Category: {:?}", brand);
+        
+    let search_term = brand.name.trim().to_lowercase();
+    let search_pattern = format!("%{}%", search_term);
+    
+    let query = categories
+        .filter(name.ilike(search_pattern).and(published.eq(true)))
+        .order(name.desc())
+        .load::<Category>(connection);
+
+    query
 }
 
 fn create_category(category: CreateCategoryCommand, connection: &mut PgConnection) -> Result<String, Error> {

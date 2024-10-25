@@ -8,8 +8,7 @@ use axum::{
 use serde_json::json;
 
 use crate::utils::{
-    response::BaseResponse,
-    utf8_json::Utf8Json,
+    args::sub_commands::category_commands::GetCategoryByName, response::BaseResponse, utf8_json::Utf8Json
 };
 
 use crate::utils::{models::category::CategoryProductResponse, response::ApiResponse};
@@ -26,6 +25,7 @@ impl CategoryRoutes {
     pub fn get_routes() -> Router {
         Router::new()
             .route("/category/:category_url_name", get(Self::get_category))
+            .route("/category/name/:name", get(Self::get_category_by_name))
             .route("/category", get(Self::get_all_categories))
             .route("/category", post(Self::new_category))
             .route("/category", put(Self::update_category))
@@ -40,6 +40,14 @@ impl CategoryRoutes {
         });
 
         Self::handle_category_product_result(result)
+    }
+
+    async fn get_category_by_name(Path(name): Path<String>) -> impl IntoResponse {
+        let result = category_ops::handle_category_command(CategoryCommand {
+            command: CategorySubcommand::GetCategoryByName(GetCategoryByName {  name  }),
+        });
+
+        Self::handle_categories_product_result(result)
     }
     
     async fn get_all_categories() -> impl IntoResponse {
