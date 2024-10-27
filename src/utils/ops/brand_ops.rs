@@ -75,6 +75,7 @@ fn show_brand_by_name(brand: GetBrandByNameCommand, connection: &mut PgConnectio
         .filter(published.eq(true))
         .filter(name.ilike(search_pattern))
         .order(name.desc())
+        .limit(30)
         .load::<Brand>(connection);
 
     query

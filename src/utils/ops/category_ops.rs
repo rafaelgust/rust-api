@@ -71,6 +71,7 @@ fn show_category_by_name(brand: GetCategoryByNameCommand, connection: &mut PgCon
     let query = categories
         .filter(name.ilike(search_pattern).and(published.eq(true)))
         .order(name.desc())
+        .limit(30)
         .load::<Category>(connection);
 
     query

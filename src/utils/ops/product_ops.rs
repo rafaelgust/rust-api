@@ -81,6 +81,7 @@ fn show_product_by_name(product: GetProductByNameCommand, connection: &mut PgCon
         .filter(products::published.eq(true))
         .select((products::all_columns, brands::all_columns.nullable()))
         .order(products::name.desc())
+        .limit(30)
         .load(connection)?;
         
         for (product, brand) in product_brands {
